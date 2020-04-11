@@ -1,4 +1,4 @@
-module go-auth
+module github.com/ondi/go-auth
 
 go 1.14
 
