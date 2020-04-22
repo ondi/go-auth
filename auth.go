@@ -3,7 +3,6 @@ package auth
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -100,8 +99,7 @@ func (self Auth_t) Sign(bits int, payload map[string]interface{}) (bytes.Buffer,
 }
 
 func (self Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	temp := self.except.Search(r.URL.Path)
-	if re, ok := temp.(*regexp.Regexp); ok {
+	if re, ok := self.except.Search(r.URL.Path).(*regexp.Regexp); ok {
 		if addr := RemoteAddr(r); re.MatchString(addr) {
 			self.next.ServeHTTP(w, r)
 		} else {
@@ -109,34 +107,35 @@ func (self Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	token := r.Header.Get("Authorization")
-	ix := strings.LastIndexByte(token, ' ')
-	if ix == -1 {
-		http.Error(w, "invalid header", http.StatusUnauthorized)
-		return
-	}
-	header, payload, signature, err := jwt.Parse([]byte(token[ix+1:]))
-	if err != nil {
-		http.Error(w, "invalid token", http.StatusUnauthorized)
-		return
-	}
 	var i int
 	var ok bool
 	ts := time.Now().Unix()
-	for i = 0; i < len(self.verify); i++ {
-		if header.Alg != self.verify[i].Name(header.HashBits) {
+	for _, token := range r.Header["Authorization"] {
+		ix := strings.LastIndexByte(token, ' ')
+		if ix == -1 {
 			continue
 		}
-		if ok, err = jwt.Verify(self.verify[i], header.HashBits, signature, []byte(token[ix+1:])); err == nil && ok {
-			if err = jwt.Validate(payload, ts+60, ts); err == nil {
-				break
+		header, payload, signature, err := jwt.Parse([]byte(token[ix+1:]))
+		if err != nil {
+			continue
+		}
+		for i = 0; i < len(self.verify); i++ {
+			if header.Alg != self.verify[i].Name(header.HashBits) {
+				continue
+			}
+			if ok, err = jwt.Verify(self.verify[i], header.HashBits, signature, []byte(token[ix+1:])); err == nil && ok {
+				if err = jwt.Validate(payload, ts+60, ts); err == nil {
+					break
+				}
 			}
 		}
-	}
-	if i == len(self.verify) {
-		log.Debug("AUTH: %v, %v", ok, err)
-		http.Error(w, fmt.Sprintf("verification failed: %v, %v", ok, err), http.StatusUnauthorized)
+		if i == len(self.verify) {
+			log.Debug("AUTH: %v, %v", ok, err)
+			continue
+		}
+		self.next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
 		return
 	}
-	self.next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
+	http.Error(w, "Authorization required", http.StatusUnauthorized)
+	return
 }
