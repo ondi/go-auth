@@ -17,10 +17,13 @@ import (
 )
 
 type Auth_t struct {
-	sign   jwt.Signer
 	verify []jwt.Verifier
 	except *tst.Tree1_t
 	next   http.Handler
+}
+
+type Sign_t struct {
+	sign jwt.Signer
 }
 
 type auth_key_t string
@@ -47,23 +50,24 @@ func RemoteAddr(r *http.Request) (addr string) {
 	return r.RemoteAddr
 }
 
-func Setup(self *Auth_t, AuthCrt string, AuthKey string, next http.Handler) (err error) {
+func SetupSign(self *Sign_t, AuthKey string) (err error) {
 	var buf []byte
 	self.sign = &jwt.Sign_t{}
-	if buf, err = ioutil.ReadFile(AuthKey); err == nil {
-		err = self.sign.LoadKeyPem(buf)
+	if buf, err = ioutil.ReadFile(AuthKey); err != nil {
+		return
 	}
-	if err != nil {
-		log.Debug("AuthKey: %v", err)
-	}
+	return self.sign.LoadKeyPem(buf)
+}
 
-	var matched []string
+func (self Sign_t) Sign(bits int, payload map[string]interface{}) (bytes.Buffer, error) {
+	return jwt.Sign(self.sign, bits, payload)
+}
+
+func SetupAuth(self *Auth_t, AuthCrt string, next http.Handler) (matched []string, err error) {
 	if matched, err = filepath.Glob(AuthCrt); err != nil {
 		return
 	}
-
-	log.Debug("AUTH CERTIFICATES: %v", matched)
-
+	var buf []byte
 	for _, certfile := range matched {
 		verify := &jwt.Verify_t{}
 		if buf, err = ioutil.ReadFile(certfile); err == nil {
@@ -92,10 +96,6 @@ func (self Auth_t) Except(path string, match_ip string) (err error) {
 	}
 	self.except.Add(path, re)
 	return
-}
-
-func (self Auth_t) Sign(bits int, payload map[string]interface{}) (bytes.Buffer, error) {
-	return jwt.Sign(self.sign, bits, payload)
 }
 
 func (self Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
