@@ -34,7 +34,7 @@ func Auth(ctx context.Context) (res map[string]interface{}, ok bool) {
 }
 
 func (self Auth_t) Middleware(next http.Handler) http.Handler {
-	return Auth_t{verify: self.verify, next: next}
+	return Auth_t{verify: self.verify, except: self.except, next: next}
 }
 
 func RemoteAddr(r *http.Request) (addr string) {
