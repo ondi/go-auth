@@ -1,10 +1,12 @@
+//
+//
+//
+
 package auth
 
 import (
-	"bytes"
 	"context"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"path/filepath"
 	"regexp"
@@ -22,51 +24,16 @@ type Auth_t struct {
 	next   http.Handler
 }
 
-type Sign_t struct {
-	sign jwt.Signer
-}
-
-type auth_key_t string
-
-func Auth(ctx context.Context) (res map[string]interface{}, ok bool) {
-	res, ok = ctx.Value(auth_key_t("AUTH")).(map[string]interface{})
-	return
-}
-
 func (self Auth_t) Middleware(next http.Handler) http.Handler {
 	return Auth_t{verify: self.verify, except: self.except, next: next}
 }
 
-func RemoteAddr(r *http.Request) (addr string) {
-	if addr = r.Header.Get("X-Forwarded-For"); len(addr) > 0 {
+func SetupAuth(self *Auth_t, AuthGlob string, except map[string]string, next http.Handler) (err error) {
+	var matched []string
+	if matched, err = filepath.Glob(AuthGlob); err != nil {
 		return
 	}
-	if addr = r.Header.Get("X-Real-IP"); len(addr) > 0 {
-		return
-	}
-	if addr, _, _ = net.SplitHostPort(r.RemoteAddr); len(addr) > 0 {
-		return
-	}
-	return r.RemoteAddr
-}
-
-func SetupSign(self *Sign_t, AuthKey string) (err error) {
-	var buf []byte
-	self.sign = &jwt.Sign_t{}
-	if buf, err = ioutil.ReadFile(AuthKey); err != nil {
-		return
-	}
-	return self.sign.LoadKeyPem(buf)
-}
-
-func (self Sign_t) Sign(bits int, payload map[string]interface{}) (bytes.Buffer, error) {
-	return jwt.Sign(self.sign, bits, payload)
-}
-
-func SetupAuth(self *Auth_t, AuthCrt string, next http.Handler) (matched []string, err error) {
-	if matched, err = filepath.Glob(AuthCrt); err != nil {
-		return
-	}
+	log.Debug("AUTH MATCHED: %v", matched)
 	var buf []byte
 	for _, certfile := range matched {
 		verify := &jwt.Verify_t{}
@@ -78,23 +45,19 @@ func SetupAuth(self *Auth_t, AuthCrt string, next http.Handler) (matched []strin
 			}
 		}
 		if err != nil {
-			log.Error("AuthCert: %v %v", certfile, err)
-			continue
+			return
 		}
 		self.verify = append(self.verify, verify)
 	}
 	self.except = &tst.Tree1_t{}
-	self.next = next
-	return
-}
-
-// not thread safe, use at init()
-func (self Auth_t) Except(path string, match_ip string) (err error) {
 	var re *regexp.Regexp
-	if re, err = regexp.Compile(match_ip); err != nil {
-		return
+	for k, v := range except {
+		if re, err = regexp.Compile(v); err != nil {
+			return
+		}
+		self.except.Add(k, re)
 	}
-	self.except.Add(path, re)
+	self.next = next
 	return
 }
 
