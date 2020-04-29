@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/ondi/go-jwt"
-	"github.com/ondi/go-log"
 	"github.com/ondi/go-tst"
 )
 
@@ -33,7 +32,6 @@ func SetupAuth(self *Auth_t, AuthGlob string, except map[string]string, next htt
 	if matched, err = filepath.Glob(AuthGlob); err != nil {
 		return
 	}
-	log.Debug("AUTH MATCHED: %v", matched)
 	var buf []byte
 	for _, certfile := range matched {
 		verify := &jwt.Verify_t{}
@@ -58,6 +56,13 @@ func SetupAuth(self *Auth_t, AuthGlob string, except map[string]string, next htt
 		self.except.Add(k, re)
 	}
 	self.next = next
+	return
+}
+
+func (self Auth_t) Names(bits int) (res []string) {
+	for _, v := range self.verify {
+		res = append(res, v.Name(bits))
+	}
 	return
 }
 
@@ -93,7 +98,6 @@ func (self Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if i == len(self.verify) {
-			log.Debug("AUTH: %v, %v", ok, err)
 			continue
 		}
 		self.next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
