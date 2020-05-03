@@ -66,6 +66,31 @@ func (self Auth_t) Names(bits int) (res []string) {
 	return
 }
 
+func (self Auth_t) check(tokens []string, ts_nbf int64, ts_exp int64) (payload map[string]interface{}, ok bool, err error) {
+	var header jwt.Header_t
+	var signature []byte
+	for _, token := range tokens {
+		ix := strings.LastIndexByte(token, ' ')
+		if ix == -1 {
+			continue
+		}
+		if header, payload, signature, err = jwt.Parse([]byte(token[ix+1:])); err != nil {
+			continue
+		}
+		for _, v := range self.verify {
+			if header.Alg != v.Name(header.HashBits) {
+				continue
+			}
+			if ok, err = jwt.Verify(v, header.HashBits, signature, []byte(token[ix+1:])); err == nil && ok {
+				if err = jwt.Validate(payload, ts_nbf, ts_exp); err == nil {
+					return
+				}
+			}
+		}
+	}
+	return
+}
+
 func (self Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if re, ok := self.except.Search(r.URL.Path).(*regexp.Regexp); ok {
 		if addr := RemoteAddr(r); re.MatchString(addr) {
@@ -75,34 +100,12 @@ func (self Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	var i int
-	var ok bool
 	ts := time.Now().Unix()
-	for _, token := range r.Header["Authorization"] {
-		ix := strings.LastIndexByte(token, ' ')
-		if ix == -1 {
-			continue
-		}
-		header, payload, signature, err := jwt.Parse([]byte(token[ix+1:]))
-		if err != nil {
-			continue
-		}
-		for i = 0; i < len(self.verify); i++ {
-			if header.Alg != self.verify[i].Name(header.HashBits) {
-				continue
-			}
-			if ok, err = jwt.Verify(self.verify[i], header.HashBits, signature, []byte(token[ix+1:])); err == nil && ok {
-				if err = jwt.Validate(payload, ts+60, ts); err == nil {
-					break
-				}
-			}
-		}
-		if i == len(self.verify) {
-			continue
-		}
+	payload, ok, err := self.check(r.Header["Authorization"], ts+60, ts)
+	if ok && err == nil {
 		self.next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
-		return
+	} else {
+		http.Error(w, "Authorization required", http.StatusUnauthorized)
 	}
-	http.Error(w, "Authorization required", http.StatusUnauthorized)
 	return
 }
