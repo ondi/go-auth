@@ -17,17 +17,17 @@ import (
 	"github.com/ondi/go-tst"
 )
 
-type Auth_t struct {
+type Verify_t struct {
 	verify []jwt.Verifier
 	except *tst.Tree1_t
 	next   http.Handler
 }
 
-func (self Auth_t) Middleware(next http.Handler) http.Handler {
-	return Auth_t{verify: self.verify, except: self.except, next: next}
+func (self Verify_t) Middleware(next http.Handler) http.Handler {
+	return Verify_t{verify: self.verify, except: self.except, next: next}
 }
 
-func SetupAuth(self *Auth_t, AuthGlob string, except map[string]string, next http.Handler) (err error) {
+func SetupAuth(self *Verify_t, AuthGlob string, except map[string]string, next http.Handler) (err error) {
 	var matched []string
 	if matched, err = filepath.Glob(AuthGlob); err != nil {
 		return
@@ -59,14 +59,14 @@ func SetupAuth(self *Auth_t, AuthGlob string, except map[string]string, next htt
 	return
 }
 
-func (self Auth_t) Names(bits int) (res []string) {
+func (self Verify_t) Names(bits int) (res []string) {
 	for _, v := range self.verify {
 		res = append(res, v.Name(bits))
 	}
 	return
 }
 
-func (self Auth_t) check(tokens []string, ts_nbf int64, ts_exp int64) (payload map[string]interface{}, ok bool, err error) {
+func (self Verify_t) Check(tokens []string, ts_nbf int64, ts_exp int64) (payload map[string]interface{}, ok bool, err error) {
 	var header jwt.Header_t
 	var signature []byte
 	for _, token := range tokens {
@@ -91,7 +91,7 @@ func (self Auth_t) check(tokens []string, ts_nbf int64, ts_exp int64) (payload m
 	return
 }
 
-func (self Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (self Verify_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if re, ok := self.except.Search(r.URL.Path).(*regexp.Regexp); ok {
 		if addr := RemoteAddr(r); re.MatchString(addr) {
 			self.next.ServeHTTP(w, r)
@@ -101,7 +101,7 @@ func (self Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ts := time.Now().Unix()
-	payload, ok, err := self.check(r.Header["Authorization"], ts+60, ts)
+	payload, ok, err := self.Check(r.Header["Authorization"], ts+60, ts)
 	if ok && err == nil {
 		self.next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
 	} else {
