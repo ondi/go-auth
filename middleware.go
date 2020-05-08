@@ -39,6 +39,10 @@ func NewMiddleware(AuthGlob string, except map[string]string, next http.Handler)
 	return
 }
 
+func (self Middleware_t) Names(bits int) []string {
+	return self.verify.Names(bits)
+}
+
 func (self Middleware_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if re, ok := self.except.Search(r.URL.Path).(*regexp.Regexp); ok {
 		if addr := RemoteAddr(r); re.MatchString(addr) {
