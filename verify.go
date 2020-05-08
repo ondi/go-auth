@@ -5,29 +5,16 @@
 package auth
 
 import (
-	"context"
 	"io/ioutil"
-	"net/http"
 	"path/filepath"
-	"regexp"
 	"strings"
-	"time"
 
 	"github.com/ondi/go-jwt"
-	"github.com/ondi/go-tst"
 )
 
-type Verify_t struct {
-	verify []jwt.Verifier
-	except *tst.Tree1_t
-	next   http.Handler
-}
+type Verify_t []jwt.Verifier
 
-func (self Verify_t) Middleware(next http.Handler) http.Handler {
-	return Verify_t{verify: self.verify, except: self.except, next: next}
-}
-
-func SetupAuth(self *Verify_t, AuthGlob string, except map[string]string, next http.Handler) (err error) {
+func NewVerify(AuthGlob string) (res Verify_t, err error) {
 	var matched []string
 	if matched, err = filepath.Glob(AuthGlob); err != nil {
 		return
@@ -45,22 +32,13 @@ func SetupAuth(self *Verify_t, AuthGlob string, except map[string]string, next h
 		if err != nil {
 			return
 		}
-		self.verify = append(self.verify, verify)
+		res = append(res, verify)
 	}
-	self.except = &tst.Tree1_t{}
-	var re *regexp.Regexp
-	for k, v := range except {
-		if re, err = regexp.Compile(v); err != nil {
-			return
-		}
-		self.except.Add(k, re)
-	}
-	self.next = next
 	return
 }
 
 func (self Verify_t) Names(bits int) (res []string) {
-	for _, v := range self.verify {
+	for _, v := range self {
 		res = append(res, v.Name(bits))
 	}
 	return
@@ -77,7 +55,7 @@ func (self Verify_t) Check(tokens []string, ts_nbf int64, ts_exp int64) (payload
 		if header, payload, signature, err = jwt.Parse([]byte(token[ix+1:])); err != nil {
 			continue
 		}
-		for _, v := range self.verify {
+		for _, v := range self {
 			if header.Alg != v.Name(header.HashBits) {
 				continue
 			}
@@ -87,25 +65,6 @@ func (self Verify_t) Check(tokens []string, ts_nbf int64, ts_exp int64) (payload
 				}
 			}
 		}
-	}
-	return
-}
-
-func (self Verify_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if re, ok := self.except.Search(r.URL.Path).(*regexp.Regexp); ok {
-		if addr := RemoteAddr(r); re.MatchString(addr) {
-			self.next.ServeHTTP(w, r)
-		} else {
-			http.Error(w, "ACCESS DENIED: "+addr, http.StatusForbidden)
-		}
-		return
-	}
-	ts := time.Now().Unix()
-	payload, ok, err := self.Check(r.Header["Authorization"], ts+60, ts)
-	if ok && err == nil {
-		self.next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
-	} else {
-		http.Error(w, "Authorization required", http.StatusUnauthorized)
 	}
 	return
 }
