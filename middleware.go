@@ -23,8 +23,10 @@ func (self Middleware_t) WithNext(next http.Handler) http.Handler {
 	return Middleware_t{verify: self.verify, except: self.except, next: next}
 }
 
-func NewMiddleware(verify Verify_t, except map[string]string, next http.Handler) (res Middleware_t, err error) {
-	res.verify = verify
+func NewMiddleware(AuthGlob string, except map[string]string, next http.Handler) (res Middleware_t, err error) {
+	if res.verify, err = NewVerify(AuthGlob); err != nil {
+		return
+	}
 	res.except = &tst.Tree1_t{}
 	var re *regexp.Regexp
 	for k, v := range except {
