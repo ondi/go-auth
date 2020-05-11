@@ -56,7 +56,7 @@ func (self Verify_t) Check(tokens []string, ts_nbf int64, ts_exp int64) (payload
 			continue
 		}
 		for _, v := range self {
-			if strings.HasPrefix(header.Alg, v.Name()) {
+			if !strings.HasPrefix(header.Alg, v.Name()) {
 				continue
 			}
 			if ok, err = jwt.Verify(v, header.HashBits, signature, []byte(token[ix+1:])); err == nil && ok {
