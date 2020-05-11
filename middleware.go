@@ -39,8 +39,8 @@ func NewMiddleware(AuthGlob string, except map[string]string, next http.Handler)
 	return
 }
 
-func (self Middleware_t) Names(bits int) []string {
-	return self.verify.Names(bits)
+func (self Middleware_t) Names() []string {
+	return self.verify.Names()
 }
 
 func (self Middleware_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {

@@ -37,9 +37,9 @@ func NewVerify(AuthGlob string) (res Verify_t, err error) {
 	return
 }
 
-func (self Verify_t) Names(bits int) (res []string) {
+func (self Verify_t) Names() (res []string) {
 	for _, v := range self {
-		res = append(res, v.Name(bits))
+		res = append(res, v.Name())
 	}
 	return
 }
@@ -56,7 +56,7 @@ func (self Verify_t) Check(tokens []string, ts_nbf int64, ts_exp int64) (payload
 			continue
 		}
 		for _, v := range self {
-			if header.Alg != v.Name(header.HashBits) {
+			if strings.HasPrefix(header.Alg, v.Name()) {
 				continue
 			}
 			if ok, err = jwt.Verify(v, header.HashBits, signature, []byte(token[ix+1:])); err == nil && ok {
