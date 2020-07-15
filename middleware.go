@@ -53,7 +53,7 @@ func (self Middleware_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ts := time.Now().Unix()
-	payload, ok, err := self.verify.Check(r.Header["Authorization"], ts+60, ts)
+	payload, ok, err := self.verify.Check(r.Header["Authorization"], ts, ts)
 	if ok && err == nil {
 		self.next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
 	} else {
