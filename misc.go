@@ -31,6 +31,12 @@ func (self Ts_t) Ts() (int64, int64) {
 	return ts + self.Nbf, ts + self.Exp
 }
 
+type NoTs_t struct{}
+
+func (NoTs_t) Ts() (int64, int64) {
+	return 1<<63 - 1, -1 << 63
+}
+
 type auth_key_t string
 
 func Auth(ctx context.Context) (res map[string]interface{}, ok bool) {
