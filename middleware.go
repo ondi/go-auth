@@ -8,36 +8,47 @@ import (
 	"context"
 	"net/http"
 	"regexp"
-	"time"
 
 	"github.com/ondi/go-tst"
 )
+
+type Ts interface {
+	Ts() (nbf int64, exp int64)
+}
 
 type Middleware_t struct {
 	verify     Verify_t
 	except     *tst.Tree1_t
 	next_ok    http.Handler
 	next_error http.Handler
+	ts         Ts
 }
 
 func (self Middleware_t) WithNext(next_ok http.Handler, next_error http.Handler) http.Handler {
-	return Middleware_t{verify: self.verify, except: self.except, next_ok: next_ok, next_error: next_error}
+	return Middleware_t{
+		verify:     self.verify,
+		except:     self.except,
+		next_ok:    next_ok,
+		next_error: next_error,
+		ts:         self.ts,
+	}
 }
 
-func New(AuthGlob string, except map[string]string, next_ok http.Handler, next_error http.Handler) (res Middleware_t, err error) {
-	if res.verify, err = NewVerify(AuthGlob); err != nil {
+func New(AuthGlob string, except map[string]string, next_ok http.Handler, next_error http.Handler, ts Ts) (self Middleware_t, err error) {
+	if self.verify, err = NewVerify(AuthGlob); err != nil {
 		return
 	}
-	res.except = &tst.Tree1_t{}
+	self.except = &tst.Tree1_t{}
 	var re *regexp.Regexp
 	for k, v := range except {
 		if re, err = regexp.Compile(v); err != nil {
 			return
 		}
-		res.except.Add(k, re)
+		self.except.Add(k, re)
 	}
-	res.next_ok = next_ok
-	res.next_error = next_error
+	self.next_ok = next_ok
+	self.next_error = next_error
+	self.ts = ts
 	return
 }
 
@@ -54,8 +65,8 @@ func (self Middleware_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	ts := time.Now().Unix()
-	payload, ok, err := self.verify.Check(r.Header["Authorization"], ts, ts)
+	nbf, exp := self.ts.Ts()
+	payload, ok, err := self.verify.Check(r.Header["Authorization"], nbf, exp)
 	if ok && err == nil {
 		self.next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
 	} else {
