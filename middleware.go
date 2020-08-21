@@ -71,9 +71,9 @@ func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error http.Ha
 func VerifyAddr(re *regexp.Regexp, next_ok http.HandlerFunc, next_error http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if addr := RemoteAddr(r); re.MatchString(addr) {
-			next_ok.ServeHTTP(w, r)
+			next_ok(w, r)
 		} else {
-			next_error.ServeHTTP(w, r)
+			next_error(w, r)
 		}
 		return
 	}
