@@ -61,9 +61,9 @@ func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error http.Ha
 		nbf, exp := ts.Ts()
 		payload, ok, err := verify.Check(r.Header["Authorization"], nbf, exp)
 		if ok && err == nil {
-			next_ok(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
+			next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
 		} else {
-			next_error(w, r)
+			next_error.ServeHTTP(w, r)
 		}
 	}
 }
@@ -71,9 +71,9 @@ func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error http.Ha
 func VerifyAddr(re *regexp.Regexp, next_ok http.HandlerFunc, next_error http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if addr := RemoteAddr(r); re.MatchString(addr) {
-			next_ok(w, r)
+			next_ok.ServeHTTP(w, r)
 		} else {
-			next_error(w, r)
+			next_error.ServeHTTP(w, r)
 		}
 		return
 	}
