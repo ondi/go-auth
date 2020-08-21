@@ -12,15 +12,19 @@ import (
 	"github.com/ondi/go-jwt"
 )
 
-type Verify_t []jwt.Verifier
+type Verifier_t []jwt.Verifier
 
-func NewVerify(AuthGlob string) (res Verify_t, err error) {
+func NewVerifierGlob(pattern string) (res Verifier_t, err error) {
 	var matched []string
-	if matched, err = filepath.Glob(AuthGlob); err != nil {
+	if matched, err = filepath.Glob(pattern); err != nil {
 		return
 	}
+	return NewVerifier(matched...)
+}
+
+func NewVerifier(files ...string) (res Verifier_t, err error) {
 	var buf []byte
-	for _, certfile := range matched {
+	for _, certfile := range files {
 		verify := &jwt.Verify_t{}
 		if buf, err = ioutil.ReadFile(certfile); err == nil {
 			if strings.HasSuffix(certfile, ".crt") {
@@ -37,14 +41,14 @@ func NewVerify(AuthGlob string) (res Verify_t, err error) {
 	return
 }
 
-func (self Verify_t) Names() (res []string) {
+func (self Verifier_t) Names() (res []string) {
 	for _, v := range self {
 		res = append(res, v.Name())
 	}
 	return
 }
 
-func (self Verify_t) Check(tokens []string, ts_nbf int64, ts_exp int64) (payload map[string]interface{}, ok bool, err error) {
+func (self Verifier_t) Check(tokens []string, ts_nbf int64, ts_exp int64) (payload map[string]interface{}, ok bool, err error) {
 	var header jwt.Header_t
 	var signature []byte
 	for _, token := range tokens {

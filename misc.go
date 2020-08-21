@@ -11,13 +11,13 @@ import (
 	"time"
 )
 
-var E401 = E401_t{}
-
+var E401H = &E401H_t{}
+var E401F = E401H.ServeHTTP
 var TS = Ts_t{60, -60}
 
-type E401_t struct{}
+type E401H_t struct{}
 
-func (E401_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (self *E401H_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "AUTHORIZATION REQUIRED "+RemoteAddr(r), http.StatusUnauthorized)
 }
 
