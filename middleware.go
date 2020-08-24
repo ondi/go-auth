@@ -42,8 +42,7 @@ func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Hand
 
 func (self TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	nbf, exp := self.ts.Ts()
-	payload, ok, err := self.verify.Check(r.Header["Authorization"], nbf, exp)
-	if ok && err == nil {
+	if payload, ok, _ := self.verify.Check(r.Header["Authorization"], nbf, exp); ok {
 		self.next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
 		return
 	}
@@ -59,8 +58,7 @@ func (self TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error http.HandlerFunc, ts Ts) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		nbf, exp := ts.Ts()
-		payload, ok, err := verify.Check(r.Header["Authorization"], nbf, exp)
-		if ok && err == nil {
+		if payload, ok, _ := verify.Check(r.Header["Authorization"], nbf, exp); ok {
 			next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
 		} else {
 			next_error.ServeHTTP(w, r)
