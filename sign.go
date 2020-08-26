@@ -17,11 +17,10 @@ type Sign_t struct {
 
 func NewSign(AuthKey string) (res Sign_t, err error) {
 	var buf []byte
-	res.sign = &jwt.Sign_t{}
 	if buf, err = ioutil.ReadFile(AuthKey); err != nil {
 		return
 	}
-	err = res.sign.LoadKeyPem(buf)
+	res.sign, err = jwt.NewSignPem(buf)
 	return
 }
 

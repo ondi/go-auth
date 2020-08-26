@@ -25,12 +25,12 @@ func NewVerifierGlob(pattern string) (res Verifier_t, err error) {
 func NewVerifier(files ...string) (res Verifier_t, err error) {
 	var buf []byte
 	for _, certfile := range files {
-		verify := &jwt.Verify_t{}
+		var verify jwt.Verify_t
 		if buf, err = ioutil.ReadFile(certfile); err == nil {
 			if strings.HasSuffix(certfile, ".crt") {
-				err = verify.LoadCertPem(buf)
+				verify, err = jwt.NewVerifyPem(buf)
 			} else {
-				err = verify.LoadCertDer(buf)
+				verify, err = jwt.NewVerifyDer(buf)
 			}
 		}
 		if err != nil {
