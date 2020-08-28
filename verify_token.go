@@ -64,7 +64,7 @@ func (self Verifier_t) Check(tokens []string, ts_nbf int64, ts_exp int64) (paylo
 				continue
 			}
 			if ok, err = jwt.Verify(v, header.HashBits, signature, []byte(token[ix+1:])); err == nil && ok {
-				if err = jwt.Validate(payload, ts_nbf, ts_exp); err == nil {
+				if ok, err = jwt.Validate(payload, ts_nbf, ts_exp); ok {
 					return
 				}
 			}
