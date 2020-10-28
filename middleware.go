@@ -7,10 +7,21 @@ package auth
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"regexp"
 
 	"github.com/ondi/go-tst"
 )
+
+var GetTokens = func(r *http.Request) (res []string) {
+	res = r.Header["Authorization"]
+	if c, err := r.Cookie("Authorization"); err == nil {
+		if v, err := url.QueryUnescape(c.Value); err == nil {
+			res = append(res, v)
+		}
+	}
+	return
+}
 
 type Ts interface {
 	Ts() (nbf int64, exp int64)
@@ -42,7 +53,7 @@ func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Hand
 
 func (self TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	nbf, exp := self.ts.Ts()
-	if payload, ok, _ := self.verify.Check(r.Header["Authorization"], nbf, exp); ok {
+	if payload, ok, _ := self.verify.Check(GetTokens(r), nbf, exp); ok {
 		self.next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
 		return
 	}
@@ -58,7 +69,7 @@ func (self TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error http.HandlerFunc, ts Ts) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		nbf, exp := ts.Ts()
-		if payload, ok, _ := verify.Check(r.Header["Authorization"], nbf, exp); ok {
+		if payload, ok, _ := verify.Check(GetTokens(r), nbf, exp); ok {
 			next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
 		} else {
 			next_error.ServeHTTP(w, r)
