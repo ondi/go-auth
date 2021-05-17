@@ -24,6 +24,6 @@ func NewSign(AuthKey string) (res Sign_t, err error) {
 	return
 }
 
-func (self Sign_t) Sign(bits int64, payload map[string]interface{}) (bytes.Buffer, error) {
+func (self Sign_t) Sign(bits int64, payload []byte) (bytes.Buffer, error) {
 	return jwt.Sign(self.sign, bits, payload)
 }

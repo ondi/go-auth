@@ -48,9 +48,9 @@ func (self Verifier_t) Names() (res []string) {
 	return
 }
 
-func (self Verifier_t) Check(tokens []string, ts_nbf int64, ts_exp int64) (payload map[string]interface{}, ok bool, err error) {
+func (self Verifier_t) Check(tokens []string, ts_nbf int64, ts_exp int64) (res map[string]interface{}, ok bool, err error) {
 	var header jwt.Header_t
-	var signature []byte
+	var payload, signature []byte
 	for _, token := range tokens {
 		ix := strings.LastIndexByte(token, ' ')
 		if ix == -1 {
@@ -63,8 +63,8 @@ func (self Verifier_t) Check(tokens []string, ts_nbf int64, ts_exp int64) (paylo
 			if !strings.HasPrefix(header.Alg, v.Name()) {
 				continue
 			}
-			if ok, err = jwt.Verify(v, header.HashBits, signature, []byte(token[ix+1:])); ok {
-				if ok, err = jwt.Validate(payload, ts_nbf, ts_exp); ok {
+			if ok, err = jwt.Verify(v, header.Bits, signature, []byte(token[ix+1:])); ok {
+				if res, err = jwt.Validate(payload, ts_nbf, ts_exp); ok {
 					return
 				}
 			}
