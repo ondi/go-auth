@@ -8,6 +8,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -18,7 +19,7 @@ var TS = Ts_t{60, -60}
 type E401H_t struct{}
 
 func (E401H_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "AUTHORIZATION REQUIRED "+RemoteAddr(r), http.StatusUnauthorized)
+	http.Error(w, "AUTHORIZATION REQUIRED "+GetRemoteAddr(r), http.StatusUnauthorized)
 }
 
 type Ts_t struct {
@@ -44,7 +45,17 @@ func Auth(ctx context.Context) (res map[string]interface{}, ok bool) {
 	return
 }
 
-func RemoteAddr(r *http.Request) (addr string) {
+var GetTokens = func(r *http.Request) (res []string) {
+	res = r.Header["Authorization"]
+	if c, err := r.Cookie("Authorization"); err == nil {
+		if v, err := url.QueryUnescape(c.Value); err == nil {
+			res = append(res, v)
+		}
+	}
+	return
+}
+
+var GetRemoteAddr = func(r *http.Request) (addr string) {
 	if addr = r.Header.Get("X-Forwarded-For"); len(addr) > 0 {
 		return
 	}

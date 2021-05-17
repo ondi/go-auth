@@ -7,21 +7,10 @@ package auth
 import (
 	"context"
 	"net/http"
-	"net/url"
 	"regexp"
 
 	"github.com/ondi/go-tst"
 )
-
-var GetTokens = func(r *http.Request) (res []string) {
-	res = r.Header["Authorization"]
-	if c, err := r.Cookie("Authorization"); err == nil {
-		if v, err := url.QueryUnescape(c.Value); err == nil {
-			res = append(res, v)
-		}
-	}
-	return
-}
 
 type Ts interface {
 	Ts() (nbf int64, exp int64)
@@ -58,7 +47,7 @@ func (self TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if re, ok := self.except.Search(r.URL.Path).(*regexp.Regexp); ok {
-		if addr := RemoteAddr(r); re.MatchString(addr) {
+		if addr := GetRemoteAddr(r); re.MatchString(addr) {
 			self.next_ok.ServeHTTP(w, r)
 			return
 		}
@@ -79,7 +68,7 @@ func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error http.Ha
 
 func VerifyAddr(re *regexp.Regexp, next_ok http.HandlerFunc, next_error http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if addr := RemoteAddr(r); re.MatchString(addr) {
+		if addr := GetRemoteAddr(r); re.MatchString(addr) {
 			next_ok.ServeHTTP(w, r)
 		} else {
 			next_error.ServeHTTP(w, r)
