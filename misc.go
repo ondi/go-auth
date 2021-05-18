@@ -70,32 +70,29 @@ var GetRemoteAddr = func(r *http.Request) (addr string) {
 	return r.RemoteAddr
 }
 
-var Validate = func(payload []byte, nbf int64, exp int64) (res map[string]interface{}, err error) {
+var Validate = func(payload []byte, nbf int64, exp int64) (res map[string]interface{}, ok bool, err error) {
 	var ts float64
+	var temp interface{}
 	res = map[string]interface{}{}
 	if err = json.Unmarshal(payload, &res); err != nil {
 		return
 	}
 	// not before
-	if temp, ok := res["nbf"]; ok {
+	if temp, ok = res["nbf"]; ok {
 		if ts, ok = temp.(float64); !ok {
-			err = fmt.Errorf("nbf format error")
-			return
+			return res, false, fmt.Errorf("nbf format error")
 		}
 		if int64(ts) > nbf {
-			err = fmt.Errorf("nbf")
-			return
+			return res, false, fmt.Errorf("nbf")
 		}
 	}
 	// expiration
-	if temp, ok := res["exp"]; ok {
+	if temp, ok = res["exp"]; ok {
 		if ts, ok = temp.(float64); !ok {
-			err = fmt.Errorf("exp format error")
-			return
+			return res, false, fmt.Errorf("exp format error")
 		}
 		if int64(ts) < exp {
-			err = fmt.Errorf("exp")
-			return
+			return res, false, fmt.Errorf("exp")
 		}
 	}
 	return

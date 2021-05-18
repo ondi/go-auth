@@ -65,7 +65,7 @@ func (self Verifier_t) Check(tokens []string, ts_nbf int64, ts_exp int64) (res m
 				continue
 			}
 			if ok, err = jwt.Verify(v, bits, signature, []byte(token[ix+1:])); ok {
-				if res, err = Validate(payload, ts_nbf, ts_exp); ok {
+				if res, ok, err = Validate(payload, ts_nbf, ts_exp); ok {
 					return
 				}
 			}
