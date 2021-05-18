@@ -49,22 +49,23 @@ func (self Verifier_t) Names() (res []string) {
 }
 
 func (self Verifier_t) Check(tokens []string, ts_nbf int64, ts_exp int64) (res map[string]interface{}, ok bool, err error) {
-	var header jwt.Header_t
+	var alg string
+	var bits int64
 	var payload, signature []byte
 	for _, token := range tokens {
 		ix := strings.LastIndexByte(token, ' ')
 		if ix == -1 {
 			continue
 		}
-		if header, payload, signature, err = jwt.Parse([]byte(token[ix+1:])); err != nil {
+		if alg, bits, _, payload, signature, err = jwt.Parse([]byte(token[ix+1:])); err != nil {
 			continue
 		}
 		for _, v := range self {
-			if !strings.HasPrefix(header.Alg, v.Name()) {
+			if !strings.HasPrefix(alg, v.Name()) {
 				continue
 			}
-			if ok, err = jwt.Verify(v, header.Bits, signature, []byte(token[ix+1:])); ok {
-				if res, err = jwt.Validate(payload, ts_nbf, ts_exp); ok {
+			if ok, err = jwt.Verify(v, bits, signature, []byte(token[ix+1:])); ok {
+				if res, err = Validate(payload, ts_nbf, ts_exp); ok {
 					return
 				}
 			}
