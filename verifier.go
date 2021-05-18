@@ -53,7 +53,7 @@ func (self Verifier_t) Check(tokens []string, ts_nbf int64, ts_exp int64) (res m
 	var bits int64
 	var payload, signature []byte
 	for _, token := range tokens {
-		ix := strings.LastIndexByte(token, ' ')
+		ix := strings.IndexByte(token, ' ')
 		if ix == -1 {
 			continue
 		}
