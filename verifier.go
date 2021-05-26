@@ -24,13 +24,22 @@ func NewVerifierGlob(pattern string) (res Verifier_t, err error) {
 
 func NewVerifier(files ...string) (res Verifier_t, err error) {
 	var buf []byte
-	for _, certfile := range files {
-		var verify jwt.Verify_t
-		if buf, err = ioutil.ReadFile(certfile); err == nil {
-			if strings.HasSuffix(certfile, ".crt") {
-				verify, err = jwt.NewVerifyPem(buf)
+	var verify jwt.Verify_t
+	for _, file := range files {
+		if buf, err = ioutil.ReadFile(file); err != nil {
+			return
+		}
+		if strings.Contains(file, "key") {
+			if strings.HasSuffix(file, ".der") {
+				verify, err = jwt.NewVerifyKeyDer(buf)
 			} else {
-				verify, err = jwt.NewVerifyDer(buf)
+				verify, err = jwt.NewVerifyKeyPem(buf)
+			}
+		} else {
+			if strings.HasSuffix(file, ".der") {
+				verify, err = jwt.NewVerifyCertDer(buf)
+			} else {
+				verify, err = jwt.NewVerifyCertPem(buf)
 			}
 		}
 		if err != nil {
