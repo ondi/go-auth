@@ -83,17 +83,17 @@ var Validate = func(payload []byte, nbf int64, exp int64) (res map[string]interf
 			return res, false, fmt.Errorf("nbf format error")
 		}
 		if int64(ts) > nbf {
-			return res, false, fmt.Errorf("nbf")
+			return res, false, fmt.Errorf("nbf=%v", int64(ts)-nbf)
 		}
 	}
-	// expiration
+	// expire
 	if temp, ok = res["exp"]; ok {
 		if ts, ok = temp.(float64); !ok {
 			return res, false, fmt.Errorf("exp format error")
 		}
 		if int64(ts) < exp {
-			return res, false, fmt.Errorf("exp")
+			return res, false, fmt.Errorf("exp=%v", int64(ts)-exp)
 		}
 	}
-	return
+	return res, true, nil
 }

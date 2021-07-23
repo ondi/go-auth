@@ -1,6 +1,6 @@
 module github.com/ondi/go-auth
 
-go 1.15
+go 1.17
 
 require (
 	github.com/ondi/go-jwt v0.0.0-20210526055006-7976082a661b
