@@ -7,6 +7,8 @@ github.com/ondi/go-jwt v0.0.0-20210726141712-c2a8c7ea8719 h1:cZXyf9TQi1u0FSM28FO
 github.com/ondi/go-jwt v0.0.0-20210726141712-c2a8c7ea8719/go.mod h1:n5uIKb3jyOHzWvVVPkjmzkts9NSxhQ27JdnGCxdrwN0=
 github.com/ondi/go-tst v0.0.0-20200410195032-504f5a01d5a5 h1:Hz6Tl3Gx+EGwthQO38jWEbaVOksE+dXq1QR8Mn183jU=
 github.com/ondi/go-tst v0.0.0-20200410195032-504f5a01d5a5/go.mod h1:bK9L+KnwXNZNqYX9Nd1vTtrOk374ujgdZPKXpYOng5w=
+github.com/ondi/go-tst v0.0.0-20210726143506-a2c7b8f34683 h1:IjAad75mEpyE59G/b8P7hTjtHSb1JzHS56jccpeMV+4=
+github.com/ondi/go-tst v0.0.0-20210726143506-a2c7b8f34683/go.mod h1:8Fy6qJ6cyArUy3247RNvcYblQvD9p6cPjXX7cqSC0F4=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
