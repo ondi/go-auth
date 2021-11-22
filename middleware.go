@@ -20,9 +20,15 @@ type TokenAddr_t struct {
 	next_error Error
 }
 
-func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Handler, next_error Error, validate Validator) (self TokenAddr_t, err error) {
-	self.verify = verify
-	self.except = &tst.Tree1_t{}
+func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Handler, next_error Error, validate Validator) (self *TokenAddr_t, err error) {
+	self = &TokenAddr_t{
+		verify:     verify,
+		except:     &tst.Tree1_t{},
+		validate:   validate,
+		next_ok:    next_ok,
+		next_error: next_error,
+	}
+
 	var re *regexp.Regexp
 	for k, v := range except {
 		if re, err = regexp.Compile(v); err != nil {
@@ -30,13 +36,11 @@ func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Hand
 		}
 		self.except.Add(k, re)
 	}
-	self.next_ok = next_ok
-	self.next_error = next_error
-	self.validate = validate
+
 	return
 }
 
-func (self TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	payload, ok, err := self.verify.Verify(TOKENS.GetTokens(r), self.validate)
 	if ok {
 		self.next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
