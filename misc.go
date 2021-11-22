@@ -14,31 +14,10 @@ import (
 	"time"
 )
 
-var E401H = E401H_t{}
-var E401F = E401H.ServeHTTP
-var TS = Ts_t{60, -60}
-
-type E401H_t struct{}
-
-func (E401H_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "AUTHORIZATION REQUIRED "+GetRemoteAddr(r), http.StatusUnauthorized)
-}
-
-type Ts_t struct {
-	Nbf int64
-	Exp int64
-}
-
-func (self Ts_t) Ts() (int64, int64) {
-	ts := time.Now().Unix()
-	return ts + self.Nbf, ts + self.Exp
-}
-
-type NoTs_t struct{}
-
-func (NoTs_t) Ts() (int64, int64) {
-	return 1<<63 - 1, -1 << 63
-}
+var VALIDATOR = &Validator_t{Nbf: 60, Exp: -60}
+var TOKENS = Tokens_t{}
+var ADDR = Addr_t{}
+var ERROR = Error_t{}
 
 type auth_key_t string
 
@@ -47,7 +26,27 @@ func Auth(ctx context.Context) (res map[string]interface{}, ok bool) {
 	return
 }
 
-var GetTokens = func(r *http.Request) (res []string) {
+type Error interface {
+	ShowError(w http.ResponseWriter, r *http.Request, err error)
+}
+
+type Error_t struct{}
+
+func (Error_t) ShowError(w http.ResponseWriter, r *http.Request, err error) {
+	if err != nil {
+		http.Error(w, "AUTHORIZATION REQUIRED: "+err.Error(), http.StatusUnauthorized)
+	} else {
+		http.Error(w, "AUTHORIZATION REQUIRED ", http.StatusUnauthorized)
+	}
+}
+
+type Tokens interface {
+	GetTokens(r *http.Request) (res []string)
+}
+
+type Tokens_t struct{}
+
+func (Tokens_t) GetTokens(r *http.Request) (res []string) {
 	res = r.Header["Authorization"]
 	if c, err := r.Cookie("Authorization"); err == nil {
 		if v, err := url.QueryUnescape(c.Value); err == nil {
@@ -57,7 +56,13 @@ var GetTokens = func(r *http.Request) (res []string) {
 	return
 }
 
-var GetRemoteAddr = func(r *http.Request) (addr string) {
+type Addr interface {
+	GetAddr(r *http.Request) (addr string)
+}
+
+type Addr_t struct{}
+
+func (Addr_t) GetAddr(r *http.Request) (addr string) {
 	if addr = r.Header.Get("X-Forwarded-For"); len(addr) > 0 {
 		return
 	}
@@ -70,7 +75,20 @@ var GetRemoteAddr = func(r *http.Request) (addr string) {
 	return r.RemoteAddr
 }
 
-var Validate = func(payload []byte, nbf int64, exp int64) (res map[string]interface{}, ok bool, err error) {
+type Validator interface {
+	Validate(payload []byte) (res map[string]interface{}, ok bool, err error)
+}
+
+type Validator_t struct {
+	Nbf int64
+	Exp int64
+}
+
+func (self *Validator_t) Validate(payload []byte) (res map[string]interface{}, ok bool, err error) {
+	now := time.Now().Unix()
+	nbf := now + self.Nbf
+	exp := now + self.Exp
+
 	var ts float64
 	var temp interface{}
 	res = map[string]interface{}{}

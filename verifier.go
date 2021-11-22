@@ -57,7 +57,7 @@ func (self Verifier_t) Names() (res []string) {
 	return
 }
 
-func (self Verifier_t) Check(tokens []string, ts_nbf int64, ts_exp int64) (res map[string]interface{}, ok bool, err error) {
+func (self Verifier_t) Verify(tokens []string, validator Validator) (res map[string]interface{}, ok bool, err error) {
 	var alg string
 	var bits int64
 	var payload, signature []byte
@@ -74,7 +74,7 @@ func (self Verifier_t) Check(tokens []string, ts_nbf int64, ts_exp int64) (res m
 				continue
 			}
 			if ok, err = jwt.Verify(v, bits, signature, []byte(token[ix+1:])); ok {
-				if res, ok, err = Validate(payload, ts_nbf, ts_exp); ok {
+				if res, ok, err = validator.Validate(payload); ok {
 					return
 				}
 			}
