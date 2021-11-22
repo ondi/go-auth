@@ -37,22 +37,25 @@ func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Hand
 }
 
 func (self TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if payload, ok, _ := self.verify.Verify(TOKENS.GetTokens(r), self.validate); ok {
+	payload, ok, err := self.verify.Verify(TOKENS.GetTokens(r), self.validate)
+	if ok {
 		self.next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
 		return
 	}
-	if re, ok := self.except.Search(r.URL.Path).(*regexp.Regexp); ok {
+	re, ok := self.except.Search(r.URL.Path).(*regexp.Regexp)
+	if ok {
 		if addr := ADDR.GetAddr(r); re.MatchString(addr) {
 			self.next_ok.ServeHTTP(w, r)
 			return
 		}
 	}
-	self.next_error.ShowError(w, r, nil)
+	self.next_error.ShowError(w, r, err)
 }
 
 func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error Error, validate Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if payload, ok, err := verify.Verify(TOKENS.GetTokens(r), validate); ok {
+		payload, ok, err := verify.Verify(TOKENS.GetTokens(r), validate)
+		if ok {
 			next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
 		} else {
 			next_error.ShowError(w, r, err)

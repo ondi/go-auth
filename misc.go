@@ -26,55 +26,6 @@ func Auth(ctx context.Context) (res map[string]interface{}, ok bool) {
 	return
 }
 
-type Error interface {
-	ShowError(w http.ResponseWriter, r *http.Request, err error)
-}
-
-type Error_t struct{}
-
-func (Error_t) ShowError(w http.ResponseWriter, r *http.Request, err error) {
-	if err != nil {
-		http.Error(w, "AUTHORIZATION REQUIRED: "+err.Error(), http.StatusUnauthorized)
-	} else {
-		http.Error(w, "AUTHORIZATION REQUIRED ", http.StatusUnauthorized)
-	}
-}
-
-type Tokens interface {
-	GetTokens(r *http.Request) (res []string)
-}
-
-type Tokens_t struct{}
-
-func (Tokens_t) GetTokens(r *http.Request) (res []string) {
-	res = r.Header["Authorization"]
-	if c, err := r.Cookie("Authorization"); err == nil {
-		if v, err := url.QueryUnescape(c.Value); err == nil {
-			res = append(res, v)
-		}
-	}
-	return
-}
-
-type Addr interface {
-	GetAddr(r *http.Request) (addr string)
-}
-
-type Addr_t struct{}
-
-func (Addr_t) GetAddr(r *http.Request) (addr string) {
-	if addr = r.Header.Get("X-Forwarded-For"); len(addr) > 0 {
-		return
-	}
-	if addr = r.Header.Get("X-Real-IP"); len(addr) > 0 {
-		return
-	}
-	if addr, _, _ = net.SplitHostPort(r.RemoteAddr); len(addr) > 0 {
-		return
-	}
-	return r.RemoteAddr
-}
-
 type Validator interface {
 	Validate(payload []byte) (res map[string]interface{}, ok bool, err error)
 }
@@ -114,4 +65,53 @@ func (self *Validator_t) Validate(payload []byte) (res map[string]interface{}, o
 		}
 	}
 	return res, true, nil
+}
+
+type Tokens interface {
+	GetTokens(r *http.Request) (res []string)
+}
+
+type Tokens_t struct{}
+
+func (Tokens_t) GetTokens(r *http.Request) (res []string) {
+	res = r.Header["Authorization"]
+	if c, err := r.Cookie("Authorization"); err == nil {
+		if v, err := url.QueryUnescape(c.Value); err == nil {
+			res = append(res, v)
+		}
+	}
+	return
+}
+
+type Addr interface {
+	GetAddr(r *http.Request) (addr string)
+}
+
+type Addr_t struct{}
+
+func (Addr_t) GetAddr(r *http.Request) (addr string) {
+	if addr = r.Header.Get("X-Forwarded-For"); len(addr) > 0 {
+		return
+	}
+	if addr = r.Header.Get("X-Real-IP"); len(addr) > 0 {
+		return
+	}
+	if addr, _, _ = net.SplitHostPort(r.RemoteAddr); len(addr) > 0 {
+		return
+	}
+	return r.RemoteAddr
+}
+
+type Error interface {
+	ShowError(w http.ResponseWriter, r *http.Request, err error)
+}
+
+type Error_t struct{}
+
+func (Error_t) ShowError(w http.ResponseWriter, r *http.Request, err error) {
+	if err != nil {
+		http.Error(w, "AUTHORIZATION REQUIRED: "+err.Error(), http.StatusUnauthorized)
+	} else {
+		http.Error(w, "AUTHORIZATION REQUIRED ", http.StatusUnauthorized)
+	}
 }
