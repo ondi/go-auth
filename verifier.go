@@ -5,6 +5,7 @@
 package auth
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -58,6 +59,10 @@ func (self Verifier_t) Names() (res []string) {
 }
 
 func (self Verifier_t) Verify(tokens []string, validator Validator) (res map[string]interface{}, err error) {
+	if len(tokens) == 0 {
+		err = fmt.Errorf("NO TOKENS")
+		return
+	}
 	var alg string
 	var bits int64
 	var payload, signature []byte
