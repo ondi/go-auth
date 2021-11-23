@@ -14,10 +14,10 @@ import (
 	"time"
 )
 
-var VALIDATOR = &Validator_t{Nbf: 60, Exp: -60}
-var TOKENS = Tokens_t{}
+var TOKEN = Token_t{}
 var ADDR = Addr_t{}
 var ERROR = Error_t{}
+var VALIDATOR = &Validator_t{Nbf: 60, Exp: -60}
 
 type auth_key_t string
 
@@ -68,13 +68,13 @@ func (self *Validator_t) Validate(payload []byte) (res map[string]interface{}, e
 	return
 }
 
-type Tokens interface {
-	GetTokens(r *http.Request) (res []string)
+type Token interface {
+	GetToken(r *http.Request) (res []string)
 }
 
-type Tokens_t struct{}
+type Token_t struct{}
 
-func (Tokens_t) GetTokens(r *http.Request) (res []string) {
+func (Token_t) GetToken(r *http.Request) (res []string) {
 	res = r.Header["Authorization"]
 	if c, err := r.Cookie("Authorization"); err == nil {
 		if v, err := url.QueryUnescape(c.Value); err == nil {
