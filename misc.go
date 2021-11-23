@@ -27,7 +27,7 @@ func Auth(ctx context.Context) (res map[string]interface{}, ok bool) {
 }
 
 type Validator interface {
-	Validate(payload []byte) (res map[string]interface{}, ok bool, err error)
+	Validate(payload []byte) (res map[string]interface{}, err error)
 }
 
 type Validator_t struct {
@@ -35,36 +35,37 @@ type Validator_t struct {
 	Exp int64
 }
 
-func (self *Validator_t) Validate(payload []byte) (res map[string]interface{}, ok bool, err error) {
+func (self *Validator_t) Validate(payload []byte) (res map[string]interface{}, err error) {
 	now := time.Now().Unix()
 	nbf := now + self.Nbf
 	exp := now + self.Exp
 
 	var ts float64
-	var temp interface{}
 	res = map[string]interface{}{}
 	if err = json.Unmarshal(payload, &res); err != nil {
 		return
 	}
 	// not before
-	if temp, ok = res["nbf"]; ok {
+	temp, ok := res["nbf"]
+	if ok {
 		if ts, ok = temp.(float64); !ok {
-			return res, false, fmt.Errorf("nbf format error")
+			return res, fmt.Errorf("nbf format error")
 		}
 		if int64(ts) > nbf {
-			return res, false, fmt.Errorf("nbf=%v", int64(ts)-nbf)
+			return res, fmt.Errorf("nbf=%v", int64(ts)-nbf)
 		}
 	}
 	// expire
-	if temp, ok = res["exp"]; ok {
+	temp, ok = res["exp"]
+	if ok {
 		if ts, ok = temp.(float64); !ok {
-			return res, false, fmt.Errorf("exp format error")
+			return res, fmt.Errorf("exp format error")
 		}
 		if int64(ts) < exp {
-			return res, false, fmt.Errorf("exp=%v", int64(ts)-exp)
+			return res, fmt.Errorf("exp=%v", int64(ts)-exp)
 		}
 	}
-	return res, true, nil
+	return
 }
 
 type Tokens interface {

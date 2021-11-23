@@ -57,7 +57,7 @@ func (self Verifier_t) Names() (res []string) {
 	return
 }
 
-func (self Verifier_t) Verify(tokens []string, validator Validator) (res map[string]interface{}, ok bool, err error) {
+func (self Verifier_t) Verify(tokens []string, validator Validator) (res map[string]interface{}, err error) {
 	var alg string
 	var bits int64
 	var payload, signature []byte
@@ -73,8 +73,8 @@ func (self Verifier_t) Verify(tokens []string, validator Validator) (res map[str
 			if !strings.HasPrefix(alg, v.Name()) {
 				continue
 			}
-			if ok, err = jwt.Verify(v, bits, signature, []byte(token[ix+1:])); ok {
-				if res, ok, err = validator.Validate(payload); ok {
+			if err = jwt.Verify(v, bits, signature, []byte(token[ix+1:])); err == nil {
+				if res, err = validator.Validate(payload); err == nil {
 					return
 				}
 			}

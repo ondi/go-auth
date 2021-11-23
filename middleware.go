@@ -41,8 +41,8 @@ func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Hand
 }
 
 func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	payload, ok, err := self.verify.Verify(TOKENS.GetTokens(r), self.validate)
-	if ok {
+	payload, err := self.verify.Verify(TOKENS.GetTokens(r), self.validate)
+	if err == nil {
 		self.next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
 		return
 	}
@@ -58,8 +58,8 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error Error, validate Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		payload, ok, err := verify.Verify(TOKENS.GetTokens(r), validate)
-		if ok {
+		payload, err := verify.Verify(TOKENS.GetTokens(r), validate)
+		if err == nil {
 			next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), auth_key_t("AUTH"), payload)))
 		} else {
 			next_error.ShowError(w, r, err)
