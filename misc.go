@@ -19,10 +19,12 @@ var ADDR = Addr_t{}
 var ERROR = Error_t{}
 var VALIDATOR = &Validator_t{Nbf: 60, Exp: -60}
 
-type auth_key_t string
+type auth_t string
 
-func Auth(ctx context.Context) (res map[string]interface{}, ok bool) {
-	res, ok = ctx.Value(auth_key_t("AUTH")).(map[string]interface{})
+var ctx_auth auth_t = "AUTH"
+
+func Auth(ctx context.Context) (res map[string]interface{}) {
+	res, _ = ctx.Value(ctx_auth).(map[string]interface{})
 	return
 }
 
