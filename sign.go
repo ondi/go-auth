@@ -29,9 +29,9 @@ func ReturnNoSignOnError(in jwt.Signer, err error) (Signer, error) {
 }
 
 func NewSign(file string) (res Signer, err error) {
-	var buf []byte
-	if buf, err = ioutil.ReadFile(file); err != nil {
-		return
+	buf, err := ioutil.ReadFile(file)
+	if err != nil {
+		return NoSing_t{}, err
 	}
 	if strings.HasSuffix(file, ".der") {
 		res, err = ReturnNoSignOnError(jwt.NewSignDer(buf))
