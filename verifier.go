@@ -25,7 +25,7 @@ func NewVerifierGlob(pattern string) (res Verifier_t, err error) {
 
 func NewVerifier(files ...string) (res Verifier_t, err error) {
 	var buf []byte
-	var verify jwt.Verify_t
+	var verify jwt.Verifier
 	for _, file := range files {
 		if buf, err = ioutil.ReadFile(file); err != nil {
 			return
