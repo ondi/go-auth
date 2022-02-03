@@ -13,6 +13,10 @@ import (
 	"github.com/ondi/go-jwt"
 )
 
+var INVALID_TOKEN = fmt.Errorf("INVALID TOKEN")
+var NO_TOKENS = fmt.Errorf("NO TOKENS")
+var NO_KEY = fmt.Errorf("NO KEY")
+
 type Verifier_t []jwt.Verifier
 
 func NewVerifierGlob(pattern string) (res Verifier_t, err error) {
@@ -60,7 +64,7 @@ func (self Verifier_t) Names() (res []string) {
 
 func (self Verifier_t) Verify(tokens []string, validator Validator) (res map[string]interface{}, err error) {
 	if len(tokens) == 0 {
-		err = fmt.Errorf("NO TOKENS")
+		err = NO_TOKENS
 		return
 	}
 	var alg string
@@ -69,6 +73,7 @@ func (self Verifier_t) Verify(tokens []string, validator Validator) (res map[str
 	for _, token := range tokens {
 		ix := strings.IndexByte(token, ' ')
 		if ix == -1 {
+			err = INVALID_TOKEN
 			continue
 		}
 		if alg, bits, _, payload, signature, err = jwt.Parse([]byte(token[ix+1:])); err != nil {
@@ -76,6 +81,7 @@ func (self Verifier_t) Verify(tokens []string, validator Validator) (res map[str
 		}
 		for _, v := range self {
 			if !strings.HasPrefix(alg, v.Name()) {
+				err = NO_KEY
 				continue
 			}
 			if err = jwt.Verify(v, bits, signature, []byte(token[ix+1:])); err == nil {
