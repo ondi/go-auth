@@ -13,7 +13,7 @@ import (
 	"github.com/ondi/go-jwt"
 )
 
-var NO_MATCH = fmt.Errorf("NO MATCHING PARAMETERS")
+var NO_MATCH = fmt.Errorf("NO MATCHING ELEMENTS")
 
 type Verifier_t []jwt.Verifier
 
