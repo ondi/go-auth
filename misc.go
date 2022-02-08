@@ -14,10 +14,10 @@ import (
 	"time"
 )
 
-var TOKEN = Token_t{}
-var ADDR = Addr_t{}
-var ERROR = Error_t{}
-var VALIDATOR = &Validator_t{Nbf: 60, Exp: -60}
+var TOKEN = GetToken
+var ADDR = GetAddr
+var ERROR = ShowError
+var VALIDATOR = (&Validate_t{Nbf: 60, Exp: -60}).Validate
 
 type auth_t string
 
@@ -28,16 +28,17 @@ func Auth(ctx context.Context) (res map[string]interface{}) {
 	return
 }
 
-type Validator interface {
-	Validate(payload []byte) (res map[string]interface{}, err error)
-}
+type Validator_t func(payload []byte) (res map[string]interface{}, err error)
+type Token_t func(r *http.Request) (res []string)
+type Addr_t func(r *http.Request) (addr string)
+type Error_t func(w http.ResponseWriter, r *http.Request, err error)
 
-type Validator_t struct {
+type Validate_t struct {
 	Nbf int64
 	Exp int64
 }
 
-func (self *Validator_t) Validate(payload []byte) (res map[string]interface{}, err error) {
+func (self *Validate_t) Validate(payload []byte) (res map[string]interface{}, err error) {
 	now := time.Now().Unix()
 	nbf := now + self.Nbf
 	exp := now + self.Exp
@@ -70,13 +71,7 @@ func (self *Validator_t) Validate(payload []byte) (res map[string]interface{}, e
 	return
 }
 
-type Token interface {
-	GetToken(r *http.Request) (res []string)
-}
-
-type Token_t struct{}
-
-func (Token_t) GetToken(r *http.Request) (res []string) {
+func GetToken(r *http.Request) (res []string) {
 	res = r.Header["Authorization"]
 	if c, err := r.Cookie("Authorization"); err == nil {
 		if v, err := url.QueryUnescape(c.Value); err == nil {
@@ -86,13 +81,7 @@ func (Token_t) GetToken(r *http.Request) (res []string) {
 	return
 }
 
-type Addr interface {
-	GetAddr(r *http.Request) (addr string)
-}
-
-type Addr_t struct{}
-
-func (Addr_t) GetAddr(r *http.Request) (addr string) {
+func GetAddr(r *http.Request) (addr string) {
 	if addr = r.Header.Get("X-Forwarded-For"); len(addr) > 0 {
 		return
 	}
@@ -105,16 +94,10 @@ func (Addr_t) GetAddr(r *http.Request) (addr string) {
 	return r.RemoteAddr
 }
 
-type Error interface {
-	ShowError(w http.ResponseWriter, r *http.Request, err error)
-}
-
-type Error_t struct{}
-
-func (Error_t) ShowError(w http.ResponseWriter, r *http.Request, err error) {
+func ShowError(w http.ResponseWriter, r *http.Request, err error) {
 	if err != nil {
 		http.Error(w, "AUTHORIZATION REQUIRED: "+err.Error(), http.StatusUnauthorized)
 	} else {
-		http.Error(w, "AUTHORIZATION REQUIRED ", http.StatusUnauthorized)
+		http.Error(w, "AUTHORIZATION REQUIRED", http.StatusUnauthorized)
 	}
 }
