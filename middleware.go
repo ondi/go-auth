@@ -14,7 +14,7 @@ import (
 
 type TokenAddr_t struct {
 	verify     Verifier_t
-	except     *tst.Tree1_t
+	except     *tst.Tree1_t[*regexp.Regexp]
 	token      Token_t
 	addr       Addr_t
 	validate   Validator_t
@@ -25,7 +25,7 @@ type TokenAddr_t struct {
 func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Handler, next_error Error_t, token Token_t, addr Addr_t, validate Validator_t) (self *TokenAddr_t, err error) {
 	self = &TokenAddr_t{
 		verify:     verify,
-		except:     &tst.Tree1_t{},
+		except:     &tst.Tree1_t[*regexp.Regexp]{},
 		token:      token,
 		addr:       addr,
 		validate:   validate,
@@ -50,7 +50,7 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		self.next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctx_auth, payload)))
 		return
 	}
-	re, ok := self.except.Search(r.URL.Path).(*regexp.Regexp)
+	re, ok := self.except.Search(r.URL.Path)
 	if ok {
 		if addr := self.addr(r); re.MatchString(addr) {
 			self.next_ok.ServeHTTP(w, r)
