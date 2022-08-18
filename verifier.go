@@ -5,7 +5,7 @@
 package auth
 
 import (
-	"fmt"
+	"errors"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -13,7 +13,7 @@ import (
 	"github.com/ondi/go-jwt"
 )
 
-var NO_MATCH = fmt.Errorf("NO MATCHING ELEMENTS")
+var NO_MATCH = errors.New("NO MATCHING ELEMENTS")
 
 type Verifier_t []jwt.Verifier
 

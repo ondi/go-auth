@@ -14,9 +14,6 @@ import (
 	"time"
 )
 
-var TOKEN = GetToken
-var ADDR = GetAddr
-var ERROR = ShowError
 var VALIDATOR = (&Validate_t{Nbf: 60, Exp: -60}).Validate
 
 type auth_t string
@@ -28,11 +25,6 @@ func Auth(ctx context.Context) (res map[string]interface{}) {
 	return
 }
 
-type Validator_t func(payload []byte) (res map[string]interface{}, err error)
-type Token_t func(r *http.Request) (res []string)
-type Addr_t func(r *http.Request) (addr string)
-type Error_t func(w http.ResponseWriter, r *http.Request, err error)
-
 type Validate_t struct {
 	Nbf int64
 	Exp int64
@@ -40,8 +32,6 @@ type Validate_t struct {
 
 func (self *Validate_t) Validate(payload []byte) (res map[string]interface{}, err error) {
 	now := time.Now().Unix()
-	nbf := now + self.Nbf
-	exp := now + self.Exp
 
 	var ts float64
 	res = map[string]interface{}{}
@@ -54,8 +44,8 @@ func (self *Validate_t) Validate(payload []byte) (res map[string]interface{}, er
 		if ts, ok = temp.(float64); !ok {
 			return res, fmt.Errorf("nbf format error")
 		}
-		if int64(ts) > nbf {
-			return res, fmt.Errorf("nbf=%v", int64(ts)-nbf)
+		if int64(ts) > now+self.Nbf {
+			return res, fmt.Errorf("nbf=%v", int64(ts))
 		}
 	}
 	// expire
@@ -64,14 +54,14 @@ func (self *Validate_t) Validate(payload []byte) (res map[string]interface{}, er
 		if ts, ok = temp.(float64); !ok {
 			return res, fmt.Errorf("exp format error")
 		}
-		if int64(ts) < exp {
-			return res, fmt.Errorf("exp=%v", int64(ts)-exp)
+		if int64(ts) < now+self.Exp {
+			return res, fmt.Errorf("exp=%v", int64(ts))
 		}
 	}
 	return
 }
 
-func GetToken(r *http.Request) (res []string) {
+func TOKEN(r *http.Request) (res []string) {
 	res = r.Header["Authorization"]
 	if c, err := r.Cookie("Authorization"); err == nil {
 		if v, err := url.QueryUnescape(c.Value); err == nil {
@@ -81,7 +71,7 @@ func GetToken(r *http.Request) (res []string) {
 	return
 }
 
-func GetAddr(r *http.Request) (addr string) {
+func ADDR(r *http.Request) (addr string) {
 	if addr = r.Header.Get("X-Forwarded-For"); len(addr) > 0 {
 		return
 	}
@@ -94,7 +84,7 @@ func GetAddr(r *http.Request) (addr string) {
 	return r.RemoteAddr
 }
 
-func ShowError(w http.ResponseWriter, r *http.Request, err error) {
+func ERROR(w http.ResponseWriter, r *http.Request, err error) {
 	if err != nil {
 		http.Error(w, "AUTHORIZATION REQUIRED: "+err.Error(), http.StatusUnauthorized)
 	} else {

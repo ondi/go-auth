@@ -12,6 +12,11 @@ import (
 	"github.com/ondi/go-tst"
 )
 
+type Token_t func(r *http.Request) (res []string)
+type Addr_t func(r *http.Request) (addr string)
+type Error_t func(w http.ResponseWriter, r *http.Request, err error)
+type Validator_t func(payload []byte) (res map[string]interface{}, err error)
+
 type TokenAddr_t struct {
 	verify     Verifier_t
 	except     *tst.Tree1_t[*regexp.Regexp]
