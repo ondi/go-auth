@@ -30,7 +30,7 @@ type Validate_t struct {
 	Exp int64
 }
 
-func (self *Validate_t) Validate(payload []byte) (res map[string]interface{}, err error) {
+func (self *Validate_t) Validate(r *http.Request, payload []byte) (res map[string]interface{}, err error) {
 	now := time.Now().Unix()
 
 	var ts float64

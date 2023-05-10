@@ -15,7 +15,7 @@ import (
 type Token_t func(r *http.Request) (res []string)
 type Addr_t func(r *http.Request) (addr string)
 type Error_t func(w http.ResponseWriter, r *http.Request, err error)
-type Validator_t func(payload []byte) (res map[string]interface{}, err error)
+type Validator_t func(r *http.Request, payload []byte) (res map[string]interface{}, err error)
 
 type TokenAddr_t struct {
 	verify     Verifier_t
@@ -50,7 +50,7 @@ func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Hand
 }
 
 func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	payload, err := self.verify.Verify(self.token(r), self.validate)
+	payload, err := self.verify.Verify(r, self.token, self.validate)
 	if err == nil {
 		self.next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctx_auth, payload)))
 		return
@@ -67,7 +67,7 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error Error_t, token Token_t, validate Validator_t) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		payload, err := verify.Verify(token(r), validate)
+		payload, err := verify.Verify(r, token, validate)
 		if err == nil {
 			next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctx_auth, payload)))
 		} else {
