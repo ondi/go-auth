@@ -15,19 +15,19 @@ import (
 type Token_t func(r *http.Request) (res []string)
 type Addr_t func(r *http.Request) (addr string)
 type Error_t func(w http.ResponseWriter, r *http.Request, err error)
-type Validator_t func(r *http.Request, payload []byte) (res map[string]interface{}, err error)
+type Validate_t func(r *http.Request, payload []byte) (res map[string]interface{}, err error)
 
 type TokenAddr_t struct {
 	verify     Verifier_t
 	except     *tst.Tree1_t[*regexp.Regexp]
 	token      Token_t
 	addr       Addr_t
-	validate   Validator_t
+	validate   Validate_t
 	next_ok    http.Handler
 	next_error Error_t
 }
 
-func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Handler, next_error Error_t, token Token_t, addr Addr_t, validate Validator_t) (self *TokenAddr_t, err error) {
+func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Handler, next_error Error_t, token Token_t, addr Addr_t, validate Validate_t) (self *TokenAddr_t, err error) {
 	self = &TokenAddr_t{
 		verify:     verify,
 		except:     &tst.Tree1_t[*regexp.Regexp]{},
@@ -65,7 +65,7 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	self.next_error(w, r, err)
 }
 
-func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error Error_t, token Token_t, validate Validator_t) http.HandlerFunc {
+func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error Error_t, token Token_t, validate Validate_t) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		payload, err := verify.Verify(r, token, validate)
 		if err == nil {

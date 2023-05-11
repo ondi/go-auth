@@ -5,7 +5,6 @@
 package auth
 
 import (
-	"errors"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
@@ -13,8 +12,6 @@ import (
 
 	"github.com/ondi/go-jwt"
 )
-
-var NO_MATCH = errors.New("NO MATCHING ELEMENTS")
 
 type Verifier_t []jwt.Verifier
 
@@ -61,7 +58,7 @@ func (self Verifier_t) Names() (res []string) {
 	return
 }
 
-func (self Verifier_t) Verify(r *http.Request, token Token_t, validate Validator_t) (res map[string]interface{}, err error) {
+func (self Verifier_t) Verify(r *http.Request, token Token_t, validate Validate_t) (res map[string]interface{}, err error) {
 	var alg string
 	var bits int64
 	var payload, signature []byte
@@ -85,7 +82,7 @@ func (self Verifier_t) Verify(r *http.Request, token Token_t, validate Validator
 		}
 	}
 	if err == nil {
-		err = NO_MATCH
+		err = ERROR_MATCH
 	}
 	return
 }

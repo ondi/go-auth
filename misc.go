@@ -7,6 +7,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -14,7 +15,10 @@ import (
 	"time"
 )
 
-var VALIDATOR = (&Validate_t{Nbf: 60, Exp: -60}).Validate
+var (
+	VALIDATOR   = (&Validator_t{Nbf: 60, Exp: -60}).Validate
+	ERROR_MATCH = errors.New("NO MATCHING ELEMENTS")
+)
 
 type auth_t string
 
@@ -25,12 +29,12 @@ func Auth(ctx context.Context) (res map[string]interface{}) {
 	return
 }
 
-type Validate_t struct {
+type Validator_t struct {
 	Nbf int64
 	Exp int64
 }
 
-func (self *Validate_t) Validate(r *http.Request, payload []byte) (res map[string]interface{}, err error) {
+func (self *Validator_t) Validate(r *http.Request, payload []byte) (res map[string]interface{}, err error) {
 	now := time.Now().Unix()
 
 	var ts float64
