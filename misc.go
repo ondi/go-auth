@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	VALIDATOR   = (&Validator_t{Nbf: 60, Exp: -60}).Validate
+	VALIDATOR   = &Validator_t{Nbf: 60, Exp: -60}
 	ERROR_MATCH = errors.New("NO MATCHING ELEMENTS")
 )
 
@@ -29,43 +29,60 @@ func Auth(ctx context.Context) (res map[string]interface{}) {
 	return
 }
 
-type Validator_t struct {
-	Nbf int64
-	Exp int64
+func ERROR(w http.ResponseWriter, r *http.Request, err error) {
+	if err != nil {
+		http.Error(w, "AUTHORIZATION REQUIRED: "+err.Error(), http.StatusUnauthorized)
+	} else {
+		http.Error(w, "AUTHORIZATION REQUIRED", http.StatusUnauthorized)
+	}
 }
 
-func (self *Validator_t) Validate(r *http.Request, payload []byte) (res map[string]interface{}, err error) {
-	now := time.Now().Unix()
+type Validator_t struct {
+	Nbf        int64
+	Exp        int64
+	ExtraCheck func(r *http.Request, ts time.Time, in map[string]interface{}) error
+}
 
-	var ts float64
-	res = map[string]interface{}{}
+func (self *Validator_t) Validate(r *http.Request, ts time.Time, payload []byte) (out *http.Request, err error) {
+	var test float64
+	var res map[string]interface{}
+
 	if err = json.Unmarshal(payload, &res); err != nil {
 		return
 	}
+
 	// not before
 	temp, ok := res["nbf"]
 	if ok {
-		if ts, ok = temp.(float64); !ok {
-			return res, fmt.Errorf("nbf format error")
+		if test, ok = temp.(float64); !ok {
+			return r, fmt.Errorf("nbf format error")
 		}
-		if int64(ts) > now+self.Nbf {
-			return res, fmt.Errorf("nbf=%v", int64(ts))
+		if int64(test) > ts.Unix()+self.Nbf {
+			return r, fmt.Errorf("nbf=%v", int64(test))
 		}
 	}
 	// expire
 	temp, ok = res["exp"]
 	if ok {
-		if ts, ok = temp.(float64); !ok {
-			return res, fmt.Errorf("exp format error")
+		if test, ok = temp.(float64); !ok {
+			return r, fmt.Errorf("exp format error")
 		}
-		if int64(ts) < now+self.Exp {
-			return res, fmt.Errorf("exp=%v", int64(ts))
+		if int64(test) < ts.Unix()+self.Exp {
+			return r, fmt.Errorf("exp=%v", int64(test))
 		}
 	}
+
+	if self.ExtraCheck != nil {
+		if err = self.ExtraCheck(r, ts, res); err != nil {
+			return
+		}
+	}
+
+	out = r.WithContext(context.WithValue(r.Context(), ctx_auth, res))
 	return
 }
 
-func TOKEN(r *http.Request) (res []string) {
+func (self *Validator_t) GetToken(r *http.Request) (res []string) {
 	res = r.Header["Authorization"]
 	if c, err := r.Cookie("Authorization"); err == nil {
 		if v, err := url.QueryUnescape(c.Value); err == nil {
@@ -75,7 +92,7 @@ func TOKEN(r *http.Request) (res []string) {
 	return
 }
 
-func ADDR(r *http.Request) (addr string) {
+func (self *Validator_t) GetAddr(r *http.Request) (addr string) {
 	if addr = r.Header.Get("X-Forwarded-For"); len(addr) > 0 {
 		return
 	}
@@ -86,12 +103,4 @@ func ADDR(r *http.Request) (addr string) {
 		return
 	}
 	return r.RemoteAddr
-}
-
-func ERROR(w http.ResponseWriter, r *http.Request, err error) {
-	if err != nil {
-		http.Error(w, "AUTHORIZATION REQUIRED: "+err.Error(), http.StatusUnauthorized)
-	} else {
-		http.Error(w, "AUTHORIZATION REQUIRED", http.StatusUnauthorized)
-	}
 }

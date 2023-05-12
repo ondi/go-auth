@@ -5,34 +5,33 @@
 package auth
 
 import (
-	"context"
 	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/ondi/go-tst"
 )
 
-type Token_t func(r *http.Request) (res []string)
-type Addr_t func(r *http.Request) (addr string)
 type Error_t func(w http.ResponseWriter, r *http.Request, err error)
-type Validate_t func(r *http.Request, payload []byte) (res map[string]interface{}, err error)
+
+type Validator interface {
+	GetToken(r *http.Request) (res []string)
+	GetAddr(r *http.Request) (addr string)
+	Validate(r *http.Request, ts time.Time, payload []byte) (out *http.Request, err error)
+}
 
 type TokenAddr_t struct {
 	verify     Verifier_t
 	except     *tst.Tree1_t[*regexp.Regexp]
-	token      Token_t
-	addr       Addr_t
-	validate   Validate_t
+	validate   Validator
 	next_ok    http.Handler
 	next_error Error_t
 }
 
-func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Handler, next_error Error_t, token Token_t, addr Addr_t, validate Validate_t) (self *TokenAddr_t, err error) {
+func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Handler, next_error Error_t, validate Validator) (self *TokenAddr_t, err error) {
 	self = &TokenAddr_t{
 		verify:     verify,
 		except:     &tst.Tree1_t[*regexp.Regexp]{},
-		token:      token,
-		addr:       addr,
 		validate:   validate,
 		next_ok:    next_ok,
 		next_error: next_error,
@@ -50,14 +49,14 @@ func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Hand
 }
 
 func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	payload, err := self.verify.Verify(r, self.token, self.validate)
+	req, err := self.verify.Verify(r, time.Now(), self.validate)
 	if err == nil {
-		self.next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctx_auth, payload)))
+		self.next_ok.ServeHTTP(w, req)
 		return
 	}
 	re, ok := self.except.Search(r.URL.Path)
 	if ok {
-		if addr := self.addr(r); re.MatchString(addr) {
+		if addr := self.validate.GetAddr(r); re.MatchString(addr) {
 			self.next_ok.ServeHTTP(w, r)
 			return
 		}
@@ -65,20 +64,20 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	self.next_error(w, r, err)
 }
 
-func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error Error_t, token Token_t, validate Validate_t) http.HandlerFunc {
+func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error Error_t, validate Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		payload, err := verify.Verify(r, token, validate)
+		req, err := verify.Verify(r, time.Now(), validate)
 		if err == nil {
-			next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctx_auth, payload)))
+			next_ok.ServeHTTP(w, req)
 		} else {
 			next_error(w, r, err)
 		}
 	}
 }
 
-func VerifyAddr(re *regexp.Regexp, next_ok http.HandlerFunc, next_error Error_t, addr Addr_t) http.HandlerFunc {
+func VerifyAddr(re *regexp.Regexp, next_ok http.HandlerFunc, next_error Error_t, validate Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if addr := addr(r); re.MatchString(addr) {
+		if addr := validate.GetAddr(r); re.MatchString(addr) {
 			next_ok.ServeHTTP(w, r)
 		} else {
 			next_error(w, r, nil)
