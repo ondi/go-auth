@@ -87,13 +87,14 @@ func (self *Validator_t) Validate(r *http.Request, ts time.Time, payload []byte)
 
 func (self *Validator_t) GetToken(r *http.Request) (res []string) {
 	var ix int
-	for _, token := range r.Header["Authorization"] {
+	var token string
+	for _, token = range r.Header["Authorization"] {
 		if ix = strings.IndexByte(token, ' '); ix > -1 {
 			res = append(res, token[ix+1:])
 		}
 	}
 	if c, err := r.Cookie("Authorization"); err == nil {
-		if token, err := url.QueryUnescape(c.Value); err == nil {
+		if token, err = url.QueryUnescape(c.Value); err == nil {
 			if ix = strings.IndexByte(token, ' '); ix > -1 {
 				res = append(res, token[ix+1:])
 			}
