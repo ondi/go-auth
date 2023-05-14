@@ -6,7 +6,6 @@ package auth
 
 import (
 	"io/ioutil"
-	"net/http"
 	"path/filepath"
 	"strings"
 
@@ -65,7 +64,7 @@ func (self Verifier_t) Names() (res []string) {
 	return
 }
 
-func (self Verifier_t) Verify(r *http.Request, token string) (payload []byte, err error) {
+func (self Verifier_t) Verify(token string) (payload []byte, err error) {
 	ix := strings.IndexByte(token, ' ')
 	if ix == -1 {
 		return nil, ERROR_MATCH

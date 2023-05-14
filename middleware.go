@@ -54,7 +54,7 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var req *http.Request
 	ts := time.Now()
 	for _, token := range self.validate.GetToken(r) {
-		if payload, err = self.verify.Verify(r, token); err == nil {
+		if payload, err = self.verify.Verify(token); err == nil {
 			if req, err = self.validate.Validate(r, ts, payload); err == nil {
 				self.next_ok.ServeHTTP(w, req)
 				return
@@ -78,7 +78,7 @@ func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error Error_t
 		var req *http.Request
 		ts := time.Now()
 		for _, token := range validate.GetToken(r) {
-			if payload, err = verify.Verify(r, token); err == nil {
+			if payload, err = verify.Verify(token); err == nil {
 				if req, err = validate.Validate(r, ts, payload); err == nil {
 					next_ok.ServeHTTP(w, req)
 					return
