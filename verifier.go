@@ -49,6 +49,9 @@ func NewVerifier(files ...string) (res Verifier_t, err error) {
 		}
 		res = append(res, verify)
 	}
+	if len(res) == 0 {
+		return res, ERROR_MATCH
+	}
 	return
 }
 
