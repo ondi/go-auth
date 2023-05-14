@@ -50,12 +50,15 @@ func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Hand
 
 func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var err error
+	var payload []byte
 	var req *http.Request
+	ts := time.Now()
 	for _, token := range self.validate.GetToken(r) {
-		req, err = self.verify.Verify(r, time.Now(), token, self.validate)
-		if err == nil {
-			self.next_ok.ServeHTTP(w, req)
-			return
+		if payload, err = self.verify.Verify(r, token); err == nil {
+			if req, err = self.validate.Validate(r, ts, payload); err == nil {
+				self.next_ok.ServeHTTP(w, req)
+				return
+			}
 		}
 	}
 	re, ok := self.except.Search(r.URL.Path)
@@ -70,14 +73,19 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error Error_t, validate Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		var payload []byte
+		var req *http.Request
+		ts := time.Now()
 		for _, token := range validate.GetToken(r) {
-			req, err := verify.Verify(r, time.Now(), token, validate)
-			if err == nil {
-				next_ok.ServeHTTP(w, req)
-			} else {
-				next_error(w, r, err)
+			if payload, err = verify.Verify(r, token); err == nil {
+				if req, err = validate.Validate(r, ts, payload); err == nil {
+					next_ok.ServeHTTP(w, req)
+					return
+				}
 			}
 		}
+		next_error(w, r, err)
 	}
 }
 

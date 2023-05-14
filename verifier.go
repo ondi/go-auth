@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/ondi/go-jwt"
 )
@@ -66,7 +65,7 @@ func (self Verifier_t) Names() (res []string) {
 	return
 }
 
-func (self Verifier_t) Verify(r *http.Request, ts time.Time, token string, validate Validator) (out *http.Request, err error) {
+func (self Verifier_t) Verify(r *http.Request, token string) (payload []byte, err error) {
 	ix := strings.IndexByte(token, ' ')
 	if ix == -1 {
 		return nil, ERROR_MATCH
@@ -80,9 +79,7 @@ func (self Verifier_t) Verify(r *http.Request, ts time.Time, token string, valid
 			continue
 		}
 		if err = jwt.Verify(v, bits, signature, []byte(token[ix+1:])); err == nil {
-			if out, err = validate.Validate(r, ts, payload); err == nil {
-				return
-			}
+			return
 		}
 	}
 	return
