@@ -65,11 +65,7 @@ func (self Verifier_t) Names() (res []string) {
 }
 
 func (self Verifier_t) Verify(token string) (payload []byte, err error) {
-	ix := strings.IndexByte(token, ' ')
-	if ix == -1 {
-		return nil, ERROR_MATCH
-	}
-	alg, bits, _, payload, signature, err := jwt.Parse([]byte(token[ix+1:]))
+	alg, bits, _, payload, signature, err := jwt.Parse([]byte(token))
 	if err != nil {
 		return
 	}
@@ -77,7 +73,7 @@ func (self Verifier_t) Verify(token string) (payload []byte, err error) {
 		if !strings.HasPrefix(alg, v.Name()) {
 			continue
 		}
-		if err = jwt.Verify(v, bits, signature, []byte(token[ix+1:])); err == nil {
+		if err = jwt.Verify(v, bits, signature, []byte(token)); err == nil {
 			return
 		}
 	}
