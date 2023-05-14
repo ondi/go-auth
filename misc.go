@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -30,10 +31,11 @@ func Auth(ctx context.Context) (res map[string]interface{}) {
 }
 
 func ERROR(w http.ResponseWriter, r *http.Request, err error) {
+	w.WriteHeader(http.StatusUnauthorized)
+	io.WriteString(w, "AUTHORIZATION REQUIRED")
 	if err != nil {
-		http.Error(w, "AUTHORIZATION REQUIRED: "+err.Error(), http.StatusUnauthorized)
-	} else {
-		http.Error(w, "AUTHORIZATION REQUIRED", http.StatusUnauthorized)
+		io.WriteString(w, " ")
+		io.WriteString(w, err.Error())
 	}
 }
 
