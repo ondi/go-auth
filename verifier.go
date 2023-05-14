@@ -52,6 +52,10 @@ func NewVerifier(files ...string) (res Verifier_t, err error) {
 	return
 }
 
+func (self Verifier_t) Len() int {
+	return len(self)
+}
+
 func (self Verifier_t) Names() (res []string) {
 	for _, v := range self {
 		res = append(res, v.Name())
@@ -59,31 +63,24 @@ func (self Verifier_t) Names() (res []string) {
 	return
 }
 
-func (self Verifier_t) Verify(r *http.Request, ts time.Time, validate Validator) (out *http.Request, err error) {
-	var alg string
-	var bits int64
-	var payload, signature []byte
-	for _, token := range validate.GetToken(r) {
-		ix := strings.IndexByte(token, ' ')
-		if ix == -1 {
-			continue
-		}
-		if alg, bits, _, payload, signature, err = jwt.Parse([]byte(token[ix+1:])); err != nil {
-			continue
-		}
-		for _, v := range self {
-			if !strings.HasPrefix(alg, v.Name()) {
-				continue
-			}
-			if err = jwt.Verify(v, bits, signature, []byte(token[ix+1:])); err == nil {
-				if out, err = validate.Validate(r, ts, payload); err == nil {
-					return
-				}
-			}
-		}
+func (self Verifier_t) Verify(r *http.Request, ts time.Time, token string, validate Validator) (out *http.Request, err error) {
+	ix := strings.IndexByte(token, ' ')
+	if ix == -1 {
+		return nil, ERROR_MATCH
 	}
-	if err == nil {
-		err = ERROR_MATCH
+	alg, bits, _, payload, signature, err := jwt.Parse([]byte(token[ix+1:]))
+	if err != nil {
+		return
+	}
+	for _, v := range self {
+		if !strings.HasPrefix(alg, v.Name()) {
+			continue
+		}
+		if err = jwt.Verify(v, bits, signature, []byte(token[ix+1:])); err == nil {
+			if out, err = validate.Validate(r, ts, payload); err == nil {
+				return
+			}
+		}
 	}
 	return
 }

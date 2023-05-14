@@ -29,6 +29,10 @@ type TokenAddr_t struct {
 }
 
 func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Handler, next_error Error_t, validate Validator) (self *TokenAddr_t, err error) {
+	if verify.Len() == 0 {
+		return nil, ERROR_MATCH
+	}
+
 	self = &TokenAddr_t{
 		verify:     verify,
 		except:     &tst.Tree1_t[*regexp.Regexp]{},
@@ -49,10 +53,14 @@ func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Hand
 }
 
 func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	req, err := self.verify.Verify(r, time.Now(), self.validate)
-	if err == nil {
-		self.next_ok.ServeHTTP(w, req)
-		return
+	var err error
+	var req *http.Request
+	for _, token := range self.validate.GetToken(r) {
+		req, err = self.verify.Verify(r, time.Now(), token, self.validate)
+		if err == nil {
+			self.next_ok.ServeHTTP(w, req)
+			return
+		}
 	}
 	re, ok := self.except.Search(r.URL.Path)
 	if ok {
@@ -66,11 +74,13 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error Error_t, validate Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		req, err := verify.Verify(r, time.Now(), validate)
-		if err == nil {
-			next_ok.ServeHTTP(w, req)
-		} else {
-			next_error(w, r, err)
+		for _, token := range validate.GetToken(r) {
+			req, err := verify.Verify(r, time.Now(), token, validate)
+			if err == nil {
+				next_ok.ServeHTTP(w, req)
+			} else {
+				next_error(w, r, err)
+			}
 		}
 	}
 }
