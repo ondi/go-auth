@@ -47,9 +47,6 @@ func NewVerifier(files ...string) (res Verifier_t, err error) {
 		}
 		res = append(res, verify)
 	}
-	if len(res) == 0 {
-		return res, ERROR_MATCH
-	}
 	return
 }
 
@@ -77,5 +74,5 @@ func (self Verifier_t) Verify(token []byte) (payload []byte, err error) {
 			return
 		}
 	}
-	return
+	return payload, ERROR_MATCH
 }
