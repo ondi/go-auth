@@ -14,6 +14,10 @@ import (
 
 type Error_t func(w http.ResponseWriter, r *http.Request, err error)
 
+type Verifier interface {
+	Verify(token []byte) (payload []byte, err error)
+}
+
 type Validator interface {
 	GetToken(r *http.Request) (res []string)
 	GetAddr(r *http.Request) (addr string)
@@ -21,14 +25,14 @@ type Validator interface {
 }
 
 type TokenAddr_t struct {
-	verify     Verifier_t
-	except     *tst.Tree1_t[*regexp.Regexp]
+	verify     Verifier
 	validate   Validator
+	except     *tst.Tree1_t[*regexp.Regexp]
 	next_ok    http.Handler
 	next_error Error_t
 }
 
-func NewTokenAddr(verify Verifier_t, except map[string]string, next_ok http.Handler, next_error Error_t, validate Validator) (self *TokenAddr_t, err error) {
+func NewTokenAddr(verify Verifier, except map[string]string, next_ok http.Handler, next_error Error_t, validate Validator) (self *TokenAddr_t, err error) {
 	self = &TokenAddr_t{
 		verify:     verify,
 		except:     &tst.Tree1_t[*regexp.Regexp]{},
@@ -71,7 +75,7 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	self.next_error(w, r, err)
 }
 
-func VerifyToken(verify Verifier_t, next_ok http.HandlerFunc, next_error Error_t, validate Validator) http.HandlerFunc {
+func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error Error_t, validate Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
 		var payload []byte
