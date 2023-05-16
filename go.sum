@@ -1,6 +1,6 @@
 github.com/google/go-cmp v0.5.6 h1:BKbKCqvP6I+rmFHt06ZmyQtvB8xAkWdhFyr0ZUNZcxQ=
-github.com/ondi/go-jwt v0.0.0-20230515093913-d143ca13665e h1:obHwGm0BB+OIibmG77El/mnsCyTtUizjUqRq/XFYSOc=
-github.com/ondi/go-jwt v0.0.0-20230515093913-d143ca13665e/go.mod h1:I6Rew8DLbpoTreTvn4xXObu9jBVe8Z0wWqGNZbcrhgU=
+github.com/ondi/go-jwt v0.0.0-20230516172945-b55d0092302b h1:x/Q/H6u8FQdvTjnBQfSJIeY6fv5HWEA68A/u4fD4zmc=
+github.com/ondi/go-jwt v0.0.0-20230516172945-b55d0092302b/go.mod h1:I6Rew8DLbpoTreTvn4xXObu9jBVe8Z0wWqGNZbcrhgU=
 github.com/ondi/go-tst v0.0.0-20220706141417-afdca779abf6 h1:Rt+KTj5bzEg/rYJEyEkpPhYNNkWSAe9OczFmuWPc8s4=
 github.com/ondi/go-tst v0.0.0-20220706141417-afdca779abf6/go.mod h1:6kGHTJHkpxi9KFaH5mupvt+MBWGuPvdMjpIxu6l0Pmg=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
