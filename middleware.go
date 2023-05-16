@@ -35,8 +35,8 @@ type TokenAddr_t struct {
 func NewTokenAddr(verify Verifier, except map[string]string, next_ok http.Handler, next_error Error_t, validate Validator) (self *TokenAddr_t, err error) {
 	self = &TokenAddr_t{
 		verify:     verify,
-		except:     &tst.Tree1_t[*regexp.Regexp]{},
 		validate:   validate,
+		except:     &tst.Tree1_t[*regexp.Regexp]{},
 		next_ok:    next_ok,
 		next_error: next_error,
 	}
