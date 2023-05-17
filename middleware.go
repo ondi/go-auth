@@ -5,6 +5,7 @@
 package auth
 
 import (
+	"context"
 	"net/http"
 	"regexp"
 	"time"
@@ -12,6 +13,8 @@ import (
 	"github.com/ondi/go-tst"
 )
 
+type Addr_t func(r *http.Request) string
+type Token_t func(r *http.Request) []string
 type Error_t func(w http.ResponseWriter, r *http.Request, err error)
 
 type Verifier interface {
@@ -19,12 +22,12 @@ type Verifier interface {
 }
 
 type Validator interface {
-	GetToken(r *http.Request) (res []string)
-	GetAddr(r *http.Request) (addr string)
-	Validate(r *http.Request, ts time.Time, payload []byte) (out *http.Request, err error)
+	Validate(ctx context.Context, route string, ts time.Time, payload []byte) (out context.Context, err error)
 }
 
 type TokenAddr_t struct {
+	addr       Addr_t
+	token      Token_t
 	verify     Verifier
 	validate   Validator
 	except     *tst.Tree1_t[*regexp.Regexp]
@@ -32,8 +35,10 @@ type TokenAddr_t struct {
 	next_error Error_t
 }
 
-func NewTokenAddr(verify Verifier, except map[string]string, next_ok http.Handler, next_error Error_t, validate Validator) (self *TokenAddr_t, err error) {
+func NewTokenAddr(verify Verifier, except map[string]string, next_ok http.Handler, next_error Error_t, addr Addr_t, token Token_t, validate Validator) (self *TokenAddr_t, err error) {
 	self = &TokenAddr_t{
+		addr:       addr,
+		token:      token,
 		verify:     verify,
 		validate:   validate,
 		except:     &tst.Tree1_t[*regexp.Regexp]{},
@@ -55,19 +60,19 @@ func NewTokenAddr(verify Verifier, except map[string]string, next_ok http.Handle
 func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var payload []byte
-	var req *http.Request
+	var ctx context.Context
 	ts := time.Now()
-	for _, token := range self.validate.GetToken(r) {
+	for _, token := range self.token(r) {
 		if payload, err = self.verify.Verify([]byte(token)); err == nil {
-			if req, err = self.validate.Validate(r, ts, payload); err == nil {
-				self.next_ok.ServeHTTP(w, req)
+			if ctx, err = self.validate.Validate(r.Context(), r.URL.Path, ts, payload); err == nil {
+				self.next_ok.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
 		}
 	}
 	re, ok := self.except.Search(r.URL.Path)
 	if ok {
-		if addr := self.validate.GetAddr(r); re.MatchString(addr) {
+		if addr := self.addr(r); re.MatchString(addr) {
 			self.next_ok.ServeHTTP(w, r)
 			return
 		}
@@ -75,16 +80,16 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	self.next_error(w, r, err)
 }
 
-func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error Error_t, validate Validator) http.HandlerFunc {
+func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error Error_t, addr Addr_t, token Token_t, validate Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
 		var payload []byte
-		var req *http.Request
+		var ctx context.Context
 		ts := time.Now()
-		for _, token := range validate.GetToken(r) {
+		for _, token := range token(r) {
 			if payload, err = verify.Verify([]byte(token)); err == nil {
-				if req, err = validate.Validate(r, ts, payload); err == nil {
-					next_ok.ServeHTTP(w, req)
+				if ctx, err = validate.Validate(r.Context(), r.URL.Path, ts, payload); err == nil {
+					next_ok.ServeHTTP(w, r.WithContext(ctx))
 					return
 				}
 			}
@@ -93,9 +98,9 @@ func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error Error_t, 
 	}
 }
 
-func VerifyAddr(re *regexp.Regexp, next_ok http.HandlerFunc, next_error Error_t, validate Validator) http.HandlerFunc {
+func VerifyAddr(re *regexp.Regexp, next_ok http.HandlerFunc, next_error Error_t, addr Addr_t, validate Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if addr := validate.GetAddr(r); re.MatchString(addr) {
+		if addr := addr(r); re.MatchString(addr) {
 			next_ok.ServeHTTP(w, r)
 		} else {
 			next_error(w, r, nil)

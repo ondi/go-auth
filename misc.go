@@ -40,13 +40,44 @@ func ERROR(w http.ResponseWriter, r *http.Request, err error) {
 	}
 }
 
+func TOKEN(r *http.Request) (out []string) {
+	var ix int
+	var token string
+	for _, token = range r.Header["Authorization"] {
+		if ix = strings.IndexByte(token, ' '); ix > -1 {
+			out = append(out, token[ix+1:])
+		}
+	}
+	if c, err := r.Cookie("Authorization"); err == nil {
+		if token, err = url.QueryUnescape(c.Value); err == nil {
+			if ix = strings.IndexByte(token, ' '); ix > -1 {
+				out = append(out, token[ix+1:])
+			}
+		}
+	}
+	return
+}
+
+func ADDR(r *http.Request) (out string) {
+	if out = r.Header.Get("X-Forwarded-For"); len(out) > 0 {
+		return
+	}
+	if out = r.Header.Get("X-Real-IP"); len(out) > 0 {
+		return
+	}
+	if out, _, _ = net.SplitHostPort(r.RemoteAddr); len(out) > 0 {
+		return
+	}
+	return r.RemoteAddr
+}
+
 type Validator_t struct {
 	Nbf        int64
 	Exp        int64
-	ExtraCheck func(r *http.Request, ts time.Time, in map[string]interface{}) error
+	ExtraCheck func(ctx context.Context, route string, ts time.Time, in map[string]interface{}) error
 }
 
-func (self *Validator_t) Validate(r *http.Request, ts time.Time, payload []byte) (out *http.Request, err error) {
+func (self *Validator_t) Validate(ctx context.Context, route string, ts time.Time, payload []byte) (out context.Context, err error) {
 	var test float64
 	var res map[string]interface{}
 
@@ -58,60 +89,29 @@ func (self *Validator_t) Validate(r *http.Request, ts time.Time, payload []byte)
 	temp, ok := res["nbf"]
 	if ok {
 		if test, ok = temp.(float64); !ok {
-			return r, fmt.Errorf("nbf format error")
+			return ctx, fmt.Errorf("nbf format error")
 		}
 		if int64(test) > ts.Unix()+self.Nbf {
-			return r, fmt.Errorf("nbf=%v", int64(test))
+			return ctx, fmt.Errorf("nbf=%v", int64(test))
 		}
 	}
 	// expire
 	temp, ok = res["exp"]
 	if ok {
 		if test, ok = temp.(float64); !ok {
-			return r, fmt.Errorf("exp format error")
+			return ctx, fmt.Errorf("exp format error")
 		}
 		if int64(test) < ts.Unix()+self.Exp {
-			return r, fmt.Errorf("exp=%v", int64(test))
+			return ctx, fmt.Errorf("exp=%v", int64(test))
 		}
 	}
 
 	if self.ExtraCheck != nil {
-		if err = self.ExtraCheck(r, ts, res); err != nil {
+		if err = self.ExtraCheck(ctx, route, ts, res); err != nil {
 			return
 		}
 	}
 
-	out = r.WithContext(context.WithValue(r.Context(), ctx_auth, res))
+	out = context.WithValue(ctx, ctx_auth, res)
 	return
-}
-
-func (self *Validator_t) GetToken(r *http.Request) (res []string) {
-	var ix int
-	var token string
-	for _, token = range r.Header["Authorization"] {
-		if ix = strings.IndexByte(token, ' '); ix > -1 {
-			res = append(res, token[ix+1:])
-		}
-	}
-	if c, err := r.Cookie("Authorization"); err == nil {
-		if token, err = url.QueryUnescape(c.Value); err == nil {
-			if ix = strings.IndexByte(token, ' '); ix > -1 {
-				res = append(res, token[ix+1:])
-			}
-		}
-	}
-	return
-}
-
-func (self *Validator_t) GetAddr(r *http.Request) (addr string) {
-	if addr = r.Header.Get("X-Forwarded-For"); len(addr) > 0 {
-		return
-	}
-	if addr = r.Header.Get("X-Real-IP"); len(addr) > 0 {
-		return
-	}
-	if addr, _, _ = net.SplitHostPort(r.RemoteAddr); len(addr) > 0 {
-		return
-	}
-	return r.RemoteAddr
 }
