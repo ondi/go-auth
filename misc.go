@@ -74,19 +74,19 @@ func ADDR(r *http.Request) (out string) {
 type Validator_t struct {
 	Nbf        int64
 	Exp        int64
-	ExtraCheck func(ctx context.Context, route string, ts time.Time, in map[string]interface{}) error
+	ExtraCheck func(ctx context.Context, route string, ts time.Time, in map[string]interface{}) (out context.Context, err error)
 }
 
 func (self *Validator_t) Validate(ctx context.Context, route string, ts time.Time, payload []byte) (out context.Context, err error) {
 	var test float64
-	var res map[string]interface{}
+	var values map[string]interface{}
 
-	if err = json.Unmarshal(payload, &res); err != nil {
+	if err = json.Unmarshal(payload, &values); err != nil {
 		return
 	}
 
 	// not before
-	temp, ok := res["nbf"]
+	temp, ok := values["nbf"]
 	if ok {
 		if test, ok = temp.(float64); !ok {
 			return ctx, fmt.Errorf("nbf format error")
@@ -96,7 +96,7 @@ func (self *Validator_t) Validate(ctx context.Context, route string, ts time.Tim
 		}
 	}
 	// expire
-	temp, ok = res["exp"]
+	temp, ok = values["exp"]
 	if ok {
 		if test, ok = temp.(float64); !ok {
 			return ctx, fmt.Errorf("exp format error")
@@ -107,11 +107,11 @@ func (self *Validator_t) Validate(ctx context.Context, route string, ts time.Tim
 	}
 
 	if self.ExtraCheck != nil {
-		if err = self.ExtraCheck(ctx, route, ts, res); err != nil {
+		if ctx, err = self.ExtraCheck(ctx, route, ts, values); err != nil {
 			return
 		}
 	}
 
-	out = context.WithValue(ctx, ctx_auth, res)
+	out = context.WithValue(ctx, ctx_auth, values)
 	return
 }
