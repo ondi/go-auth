@@ -80,7 +80,7 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	self.next_error(w, r, err)
 }
 
-func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error Error_t, addr Addr_t, token Token_t, validate Validator) http.HandlerFunc {
+func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error Error_t, token Token_t, validate Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
 		var payload []byte
