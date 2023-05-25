@@ -61,11 +61,11 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var count int
 	var payload []byte
-	var ctx context.Context
 	ts := time.Now()
+	ctx := r.Context()
 	for _, token := range self.token(r) {
 		if payload, err = self.verify.Verify([]byte(token.Value)); err == nil {
-			if ctx, err = self.validate.Validate(r.Context(), r.URL.Path, ts, token.Name, payload); err == nil {
+			if ctx, err = self.validate.Validate(ctx, r.URL.Path, ts, token.Name, payload); err == nil {
 				count++
 			}
 		}
