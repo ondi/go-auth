@@ -23,23 +23,23 @@ type Sign_t struct {
 	jwt.Signer
 }
 
-func ReturnNoSignOnError(in jwt.Signer, err error) (Signer, error) {
-	if err != nil {
-		return NoSing_t{}, err
-	}
-	return Sign_t{Signer: in}, err
-}
-
-func NewSign(file string) (res Signer, err error) {
+func NewSign(file string) (out Signer, err error) {
 	buf, err := ioutil.ReadFile(file)
 	if err != nil {
-		return NoSing_t{}, err
+		return
 	}
-	if strings.HasSuffix(file, ".der") {
-		res, err = ReturnNoSignOnError(jwt.NewSignDer(buf))
+	var res jwt.Signer
+	if strings.Contains(file, "hmac") {
+		res, err = jwt.NewHmacKey(buf)
+	} else if strings.HasSuffix(file, ".der") {
+		res, err = jwt.NewSignDer(buf)
 	} else {
-		res, err = ReturnNoSignOnError(jwt.NewSignPem(buf))
+		res, err = jwt.NewSignPem(buf)
 	}
+	if err != nil {
+		return
+	}
+	out = &Sign_t{Signer: res}
 	return
 }
 
