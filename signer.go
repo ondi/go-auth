@@ -43,7 +43,7 @@ func NewSign(file string) (out Signer, err error) {
 	return
 }
 
-func (self Sign_t) Sign(bits int64, payload []byte, out *bytes.Buffer) error {
+func (self *Sign_t) Sign(bits int64, payload []byte, out *bytes.Buffer) error {
 	return jwt.Sign(self.Signer, bits, payload, out)
 }
 
