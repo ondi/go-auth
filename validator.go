@@ -77,10 +77,10 @@ func ADDR(r *http.Request) (out string) {
 type Validator_t struct {
 	Nbf        int64
 	Exp        int64
-	ExtraCheck func(ctx context.Context, route string, ts time.Time, token_name string, in map[string]interface{}) (out context.Context, err error)
+	ExtraCheck func(ctx context.Context, ts time.Time, token_name string, in map[string]interface{}) (out context.Context, err error)
 }
 
-func (self *Validator_t) Validate(ctx context.Context, route string, ts time.Time, token_name string, payload []byte) (out context.Context, err error) {
+func (self *Validator_t) Validate(ctx context.Context, ts time.Time, token_name string, payload []byte) (out context.Context, err error) {
 	var test float64
 	var values map[string]interface{}
 
@@ -110,7 +110,7 @@ func (self *Validator_t) Validate(ctx context.Context, route string, ts time.Tim
 	}
 
 	if self.ExtraCheck != nil {
-		if ctx, err = self.ExtraCheck(ctx, route, ts, token_name, values); err != nil {
+		if ctx, err = self.ExtraCheck(ctx, ts, token_name, values); err != nil {
 			return
 		}
 	}

@@ -22,7 +22,7 @@ type Verifier interface {
 }
 
 type Validator interface {
-	Validate(ctx context.Context, route string, ts time.Time, token_name string, payload []byte) (out context.Context, err error)
+	Validate(ctx context.Context, ts time.Time, token_name string, payload []byte) (out context.Context, err error)
 }
 
 type TokenAddr_t struct {
@@ -65,7 +65,7 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	for _, token := range self.token(r) {
 		if payload, err = self.verify.Verify([]byte(token.Value)); err == nil {
-			if ctx, err = self.validate.Validate(ctx, r.URL.Path, ts, token.Name, payload); err == nil {
+			if ctx, err = self.validate.Validate(ctx, ts, token.Name, payload); err == nil {
 				count++
 			}
 		}
@@ -92,7 +92,7 @@ func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error Error_t, 
 		ts := time.Now()
 		for _, token := range token(r) {
 			if payload, err = verify.Verify([]byte(token.Value)); err == nil {
-				if ctx, err = validate.Validate(r.Context(), r.URL.Path, ts, token.Name, payload); err == nil {
+				if ctx, err = validate.Validate(r.Context(), ts, token.Name, payload); err == nil {
 					next_ok.ServeHTTP(w, r.WithContext(ctx))
 					return
 				}
