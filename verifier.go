@@ -29,19 +29,19 @@ func NewVerifier(files ...string) (res Verifier_t, err error) {
 		if buf, err = ioutil.ReadFile(file); err != nil {
 			return
 		}
-		if strings.Contains(file, "hmac") {
-			verify, err = jwt.NewHmacKey(buf)
-		} else if strings.Contains(file, "key") {
-			if strings.HasSuffix(file, ".der") {
-				verify, err = jwt.NewVerifyKeyDer(buf)
-			} else {
-				verify, err = jwt.NewVerifyKeyPem(buf)
-			}
-		} else {
+		if strings.Contains(file, "cert") {
 			if strings.HasSuffix(file, ".der") {
 				verify, err = jwt.NewVerifyCertDer(buf)
 			} else {
 				verify, err = jwt.NewVerifyCertPem(buf)
+			}
+		} else if strings.Contains(file, "hmac") {
+			verify, err = jwt.NewHmacKey(buf)
+		} else {
+			if strings.HasSuffix(file, ".der") {
+				verify, err = jwt.NewVerifyKeyDer(buf)
+			} else {
+				verify, err = jwt.NewVerifyKeyPem(buf)
 			}
 		}
 		if err != nil {
