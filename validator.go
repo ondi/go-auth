@@ -24,10 +24,13 @@ var (
 
 type auth_t string
 
-var ctx_auth auth_t = "AUTH"
+type TokenValue_t struct {
+	Name  string
+	Value string
+}
 
-func Auth(ctx context.Context) (res map[string]interface{}) {
-	res, _ = ctx.Value(ctx_auth).(map[string]interface{})
+func Auth(ctx context.Context, name string) (res map[string]interface{}) {
+	res, _ = ctx.Value(auth_t(name)).(map[string]interface{})
 	return
 }
 
@@ -40,18 +43,18 @@ func ERROR(w http.ResponseWriter, r *http.Request, err error) {
 	}
 }
 
-func TOKEN(r *http.Request) (out []string) {
+func TOKEN(r *http.Request) (out []TokenValue_t) {
 	var ix int
 	var token string
 	for _, token = range r.Header["Authorization"] {
 		if ix = strings.IndexByte(token, ' '); ix > -1 {
-			out = append(out, token[ix+1:])
+			out = append(out, TokenValue_t{Name: "AUTH", Value: token[ix+1:]})
 		}
 	}
 	if c, err := r.Cookie("Authorization"); err == nil {
 		if token, err = url.QueryUnescape(c.Value); err == nil {
 			if ix = strings.IndexByte(token, ' '); ix > -1 {
-				out = append(out, token[ix+1:])
+				out = append(out, TokenValue_t{Name: "AUTH", Value: token[ix+1:]})
 			}
 		}
 	}
@@ -74,10 +77,10 @@ func ADDR(r *http.Request) (out string) {
 type Validator_t struct {
 	Nbf        int64
 	Exp        int64
-	ExtraCheck func(ctx context.Context, route string, ts time.Time, in map[string]interface{}) (out context.Context, err error)
+	ExtraCheck func(ctx context.Context, route string, ts time.Time, token_name string, in map[string]interface{}) (out context.Context, err error)
 }
 
-func (self *Validator_t) Validate(ctx context.Context, route string, ts time.Time, payload []byte) (out context.Context, err error) {
+func (self *Validator_t) Validate(ctx context.Context, route string, ts time.Time, token_name string, payload []byte) (out context.Context, err error) {
 	var test float64
 	var values map[string]interface{}
 
@@ -107,11 +110,11 @@ func (self *Validator_t) Validate(ctx context.Context, route string, ts time.Tim
 	}
 
 	if self.ExtraCheck != nil {
-		if ctx, err = self.ExtraCheck(ctx, route, ts, values); err != nil {
+		if ctx, err = self.ExtraCheck(ctx, route, ts, token_name, values); err != nil {
 			return
 		}
 	}
 
-	out = context.WithValue(ctx, ctx_auth, values)
+	out = context.WithValue(ctx, auth_t(token_name), values)
 	return
 }

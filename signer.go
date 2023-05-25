@@ -6,14 +6,14 @@ package auth
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
 	"io/ioutil"
 	"strings"
 
 	"github.com/ondi/go-jwt"
 )
 
-var NOT_INITIALIZED = fmt.Errorf("NOT INITIALIZED")
+var NOT_INITIALIZED = errors.New("NOT INITIALIZED")
 
 type Signer interface {
 	Sign(bits int64, payload []byte, out *bytes.Buffer) error

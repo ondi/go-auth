@@ -14,7 +14,7 @@ import (
 )
 
 type Addr_t func(r *http.Request) string
-type Token_t func(r *http.Request) []string
+type Token_t func(r *http.Request) []TokenValue_t
 type Error_t func(w http.ResponseWriter, r *http.Request, err error)
 
 type Verifier interface {
@@ -22,7 +22,7 @@ type Verifier interface {
 }
 
 type Validator interface {
-	Validate(ctx context.Context, route string, ts time.Time, payload []byte) (out context.Context, err error)
+	Validate(ctx context.Context, route string, ts time.Time, token_name string, payload []byte) (out context.Context, err error)
 }
 
 type TokenAddr_t struct {
@@ -59,16 +59,20 @@ func NewTokenAddr(verify Verifier, except map[string]string, next_ok http.Handle
 
 func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var err error
+	var count int
 	var payload []byte
 	var ctx context.Context
 	ts := time.Now()
 	for _, token := range self.token(r) {
-		if payload, err = self.verify.Verify([]byte(token)); err == nil {
-			if ctx, err = self.validate.Validate(r.Context(), r.URL.Path, ts, payload); err == nil {
-				self.next_ok.ServeHTTP(w, r.WithContext(ctx))
-				return
+		if payload, err = self.verify.Verify([]byte(token.Value)); err == nil {
+			if ctx, err = self.validate.Validate(r.Context(), r.URL.Path, ts, token.Name, payload); err == nil {
+				count++
 			}
 		}
+	}
+	if count > 0 {
+		self.next_ok.ServeHTTP(w, r.WithContext(ctx))
+		return
 	}
 	re, ok := self.except.Search(r.URL.Path)
 	if ok {
@@ -87,8 +91,8 @@ func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error Error_t, 
 		var ctx context.Context
 		ts := time.Now()
 		for _, token := range token(r) {
-			if payload, err = verify.Verify([]byte(token)); err == nil {
-				if ctx, err = validate.Validate(r.Context(), r.URL.Path, ts, payload); err == nil {
+			if payload, err = verify.Verify([]byte(token.Value)); err == nil {
+				if ctx, err = validate.Validate(r.Context(), r.URL.Path, ts, token.Name, payload); err == nil {
 					next_ok.ServeHTTP(w, r.WithContext(ctx))
 					return
 				}
