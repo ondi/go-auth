@@ -89,16 +89,22 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error Error_t, token Token_t, validate Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
+		var count int
 		var payload []byte
-		var ctx context.Context
+		var next context.Context
 		ts := time.Now()
+		prev := r.Context()
 		for _, token := range token(r) {
 			if payload, err = verify.Verify([]byte(token.Value)); err == nil {
-				if ctx, err = validate.Validate(r.Context(), ts, token.Name, payload); err == nil {
-					next_ok.ServeHTTP(w, r.WithContext(ctx))
-					return
+				if next, err = validate.Validate(prev, ts, token.Name, payload); err == nil {
+					prev = next
+					count++
 				}
 			}
+		}
+		if count > 0 {
+			next_ok.ServeHTTP(w, r.WithContext(prev))
+			return
 		}
 		next_error(w, r, err)
 	}
