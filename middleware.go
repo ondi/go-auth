@@ -6,17 +6,11 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"regexp"
 	"time"
 
 	"github.com/ondi/go-tst"
-)
-
-var (
-	VALIDATOR   = &Validator_t{Nbf: 60, Exp: -60}
-	ERROR_EMPTY = errors.New("NOT INITIALIZED")
 )
 
 type Addr_t func(r *http.Request) string

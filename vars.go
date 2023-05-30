@@ -6,17 +6,24 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"net"
 	"net/http"
 	"net/url"
 	"strings"
 )
 
+var (
+	VALIDATOR    = &Validator_t{Nbf: 60, Exp: -60}
+	UNAUTHORIZED = &Unauthorized_t{}
+	ERROR_EMPTY  = errors.New("NOT INITIALIZED")
+)
+
 type auth_t string
 
 type Unauthorized_t struct{}
 
-func (Unauthorized_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (*Unauthorized_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusUnauthorized)
 }
 
