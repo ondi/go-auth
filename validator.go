@@ -88,8 +88,8 @@ func (self *Validator_t) Validate(ctx context.Context, ts time.Time, token_name 
 		if test, ok = temp.(float64); !ok {
 			return
 		}
-		if int64(test) > ts.Unix()+self.Nbf {
-			return nil, false
+		if ok = ts.Unix()+self.Nbf >= int64(test); !ok {
+			return
 		}
 	}
 	// expire
@@ -98,8 +98,8 @@ func (self *Validator_t) Validate(ctx context.Context, ts time.Time, token_name 
 		if test, ok = temp.(float64); !ok {
 			return
 		}
-		if int64(test) < ts.Unix()+self.Exp {
-			return nil, false
+		if ok = ts.Unix()+self.Exp < int64(test); !ok {
+			return
 		}
 	}
 
