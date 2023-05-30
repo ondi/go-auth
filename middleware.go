@@ -16,13 +16,11 @@ import (
 
 var (
 	VALIDATOR   = &Validator_t{Nbf: 60, Exp: -60}
-	ERROR_MATCH = errors.New("NO MATCHING ELEMENTS")
 	ERROR_EMPTY = errors.New("NOT INITIALIZED")
 )
 
 type Addr_t func(r *http.Request) string
 type Token_t func(r *http.Request) []TokenValue_t
-type Error_t func(w http.ResponseWriter, r *http.Request, err error)
 
 type Verifier interface {
 	Verify(token []byte) (payload []byte, ok bool)
@@ -39,10 +37,10 @@ type TokenAddr_t struct {
 	validate   Validator
 	except     *tst.Tree1_t[*regexp.Regexp]
 	next_ok    http.Handler
-	next_error Error_t
+	next_error http.Handler
 }
 
-func NewTokenAddr(verify Verifier, except map[string]string, next_ok http.Handler, next_error Error_t, addr Addr_t, token Token_t, validate Validator) (self *TokenAddr_t, err error) {
+func NewTokenAddr(verify Verifier, except map[string]string, next_ok http.Handler, next_error http.Handler, addr Addr_t, token Token_t, validate Validator) (self *TokenAddr_t, err error) {
 	self = &TokenAddr_t{
 		addr:       addr,
 		token:      token,
@@ -90,10 +88,10 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	self.next_error(w, r, ERROR_MATCH)
+	self.next_error.ServeHTTP(w, r)
 }
 
-func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error Error_t, token Token_t, validate Validator) http.HandlerFunc {
+func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error http.HandlerFunc, token Token_t, validate Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var ok bool
 		var count int
@@ -113,16 +111,16 @@ func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error Error_t, 
 			next_ok.ServeHTTP(w, r.WithContext(prev))
 			return
 		}
-		next_error(w, r, ERROR_MATCH)
+		next_error(w, r)
 	}
 }
 
-func VerifyAddr(re *regexp.Regexp, next_ok http.HandlerFunc, next_error Error_t, addr Addr_t, validate Validator) http.HandlerFunc {
+func VerifyAddr(re *regexp.Regexp, next_ok http.HandlerFunc, next_error http.HandlerFunc, addr Addr_t, validate Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if addr := addr(r); re.MatchString(addr) {
 			next_ok.ServeHTTP(w, r)
 		} else {
-			next_error(w, r, nil)
+			next_error(w, r)
 		}
 		return
 	}
