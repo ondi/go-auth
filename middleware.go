@@ -15,9 +15,9 @@ import (
 )
 
 var (
-	VALIDATOR             = &Validator_t{Nbf: 60, Exp: -60}
-	ERROR_MATCH           = errors.New("NO MATCHING ELEMENTS")
-	ERROR_NOT_INITIALIZED = errors.New("NOT INITIALIZED")
+	VALIDATOR   = &Validator_t{Nbf: 60, Exp: -60}
+	ERROR_MATCH = errors.New("NO MATCHING ELEMENTS")
+	ERROR_EMPTY = errors.New("NOT INITIALIZED")
 )
 
 type Addr_t func(r *http.Request) string
