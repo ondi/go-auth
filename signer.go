@@ -6,14 +6,11 @@ package auth
 
 import (
 	"bytes"
-	"errors"
 	"io/ioutil"
 	"strings"
 
 	"github.com/ondi/go-jwt"
 )
-
-var NOT_INITIALIZED = errors.New("NOT INITIALIZED")
 
 type Signer interface {
 	Sign(bits int64, payload []byte, out *bytes.Buffer) error
@@ -50,5 +47,5 @@ func (self *Sign_t) Sign(bits int64, payload []byte, out *bytes.Buffer) error {
 type NoSing_t struct{}
 
 func (NoSing_t) Sign(bits int64, payload []byte, out *bytes.Buffer) error {
-	return NOT_INITIALIZED
+	return ERROR_NOT_INITIALIZED
 }

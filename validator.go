@@ -7,19 +7,12 @@ package auth
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
-)
-
-var (
-	VALIDATOR   = &Validator_t{Nbf: 60, Exp: -60}
-	ERROR_MATCH = errors.New("NO MATCHING ELEMENTS")
 )
 
 type auth_t string
@@ -77,14 +70,15 @@ func ADDR(r *http.Request) (out string) {
 type Validator_t struct {
 	Nbf        int64
 	Exp        int64
-	ExtraCheck func(ctx context.Context, ts time.Time, token_name string, in map[string]interface{}) (out context.Context, err error)
+	ExtraCheck func(ctx context.Context, ts time.Time, token_name string, in map[string]interface{}) (out context.Context, ok bool)
 }
 
-func (self *Validator_t) Validate(ctx context.Context, ts time.Time, token_name string, payload []byte) (out context.Context, err error) {
+func (self *Validator_t) Validate(ctx context.Context, ts time.Time, token_name string, payload []byte) (out context.Context, ok bool) {
 	var test float64
 	var values map[string]interface{}
 
-	if err = json.Unmarshal(payload, &values); err != nil {
+	err := json.Unmarshal(payload, &values)
+	if err != nil {
 		return
 	}
 
@@ -92,25 +86,25 @@ func (self *Validator_t) Validate(ctx context.Context, ts time.Time, token_name 
 	temp, ok := values["nbf"]
 	if ok {
 		if test, ok = temp.(float64); !ok {
-			return ctx, fmt.Errorf("nbf format error")
+			return
 		}
 		if int64(test) > ts.Unix()+self.Nbf {
-			return ctx, fmt.Errorf("nbf=%v", int64(test))
+			return nil, false
 		}
 	}
 	// expire
 	temp, ok = values["exp"]
 	if ok {
 		if test, ok = temp.(float64); !ok {
-			return ctx, fmt.Errorf("exp format error")
+			return
 		}
 		if int64(test) < ts.Unix()+self.Exp {
-			return ctx, fmt.Errorf("exp=%v", int64(test))
+			return nil, false
 		}
 	}
 
 	if self.ExtraCheck != nil {
-		if ctx, err = self.ExtraCheck(ctx, ts, token_name, values); err != nil {
+		if ctx, ok = self.ExtraCheck(ctx, ts, token_name, values); !ok {
 			return
 		}
 	}

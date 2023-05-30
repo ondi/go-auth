@@ -63,7 +63,7 @@ func (self Verifier_t) Names() (res []string) {
 	return
 }
 
-func (self Verifier_t) Verify(token []byte) (payload []byte, err error) {
+func (self Verifier_t) Verify(token []byte) (payload []byte, ok bool) {
 	alg, bits, _, payload, signature, err := jwt.Parse([]byte(token))
 	if err != nil {
 		return
@@ -72,9 +72,9 @@ func (self Verifier_t) Verify(token []byte) (payload []byte, err error) {
 		if !strings.HasPrefix(alg, v.Name()) {
 			continue
 		}
-		if err = jwt.Verify(v, bits, signature, token); err == nil {
+		if ok = jwt.Verify(v, bits, signature, token); ok {
 			return
 		}
 	}
-	return payload, ERROR_MATCH
+	return
 }
