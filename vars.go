@@ -6,7 +6,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"net"
 	"net/http"
 	"net/url"
@@ -14,9 +13,8 @@ import (
 )
 
 var (
-	VALIDATOR    = &Validator_t{Nbf: 60, Exp: -60}
-	UNAUTHORIZED = &Unauthorized_t{}
-	ERROR_EMPTY  = errors.New("NOT INITIALIZED")
+	VALIDATOR = &Validator_t{Nbf: 60, Exp: -60}
+	ERROR     = &Unauthorized_t{}
 )
 
 type auth_t string

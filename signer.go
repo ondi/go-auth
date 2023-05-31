@@ -47,5 +47,5 @@ func (self *Sign_t) Sign(bits int64, payload []byte, out *bytes.Buffer) error {
 type NoSing_t struct{}
 
 func (NoSing_t) Sign(bits int64, payload []byte, out *bytes.Buffer) error {
-	return ERROR_EMPTY
+	return nil
 }
