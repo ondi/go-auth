@@ -64,6 +64,7 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var payload []byte
 	ts := time.Now()
 	ctx := r.Context()
+NEXT_TOKEN:
 	for _, token := range self.token(r) {
 		if payload, ok = self.verify.Verify([]byte(token.Value)); ok {
 			values := map[string]interface{}{}
@@ -72,7 +73,7 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			for _, v := range self.validate {
 				if !v.Validate(ts, token.Name, values) {
-					continue
+					continue NEXT_TOKEN
 				}
 			}
 			ctx = context.WithValue(ctx, auth_t(token.Name), values)
@@ -101,6 +102,7 @@ func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error http.Hand
 		var payload []byte
 		ts := time.Now()
 		ctx := r.Context()
+	NEXT_TOKEN:
 		for _, token := range token(r) {
 			if payload, ok = verify.Verify([]byte(token.Value)); ok {
 				values := map[string]interface{}{}
@@ -109,7 +111,7 @@ func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error http.Hand
 				}
 				for _, v := range validate {
 					if !v.Validate(ts, token.Name, values) {
-						continue
+						continue NEXT_TOKEN
 					}
 				}
 				ctx = context.WithValue(ctx, auth_t(token.Name), values)
