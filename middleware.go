@@ -5,7 +5,6 @@
 package auth
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"regexp"
@@ -76,7 +75,7 @@ NEXT_TOKEN:
 					continue NEXT_TOKEN
 				}
 			}
-			ctx = context.WithValue(ctx, auth_t(token.Name), values)
+			ctx = WithValue(ctx, token.Name, values)
 			count++
 		}
 	}
@@ -114,7 +113,7 @@ func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error http.Hand
 						continue NEXT_TOKEN
 					}
 				}
-				ctx = context.WithValue(ctx, auth_t(token.Name), values)
+				ctx = WithValue(ctx, token.Name, values)
 				count++
 			}
 		}
