@@ -14,14 +14,14 @@ import (
 
 var (
 	EXP   = &Exp_t{Nbf: 60, Exp: -60}
-	ERROR = &Unauthorized_t{}
+	ERROR = Serve401_t{}
 )
 
 type auth_t string
 
-type Unauthorized_t struct{}
+type Serve401_t struct{}
 
-func (*Unauthorized_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (Serve401_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusUnauthorized)
 }
 
