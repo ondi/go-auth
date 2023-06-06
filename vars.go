@@ -30,8 +30,17 @@ type TokenValue_t struct {
 	Value string
 }
 
-func Auth(ctx context.Context, name string) (res map[string]interface{}) {
+func WithValue(ctx context.Context, name string, value interface{}) context.Context {
+	return context.WithValue(ctx, auth_t(name), value)
+}
+
+func AuthMap(ctx context.Context, name string) (res map[string]interface{}) {
 	res, _ = ctx.Value(auth_t(name)).(map[string]interface{})
+	return
+}
+
+func AuthAny[T any](ctx context.Context, name string) (res T) {
+	res, _ = ctx.Value(auth_t(name)).(T)
 	return
 }
 
