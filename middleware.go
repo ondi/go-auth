@@ -6,6 +6,7 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"regexp"
 	"time"
@@ -21,20 +22,20 @@ type Verifier interface {
 }
 
 type Validator interface {
-	Validate(ctx context.Context, ts time.Time, token_name string, payload []byte) (out context.Context, ok bool)
+	Validate(ts time.Time, token_name string, in map[string]interface{}) (ok bool)
 }
 
 type TokenAddr_t struct {
 	addr       Addr_t
 	token      Token_t
 	verify     Verifier
-	validate   Validator
+	validate   []Validator
 	except     *tst.Tree1_t[*regexp.Regexp]
 	next_ok    http.Handler
 	next_error http.Handler
 }
 
-func NewTokenAddr(verify Verifier, except map[string]string, next_ok http.Handler, next_error http.Handler, addr Addr_t, token Token_t, validate Validator) (self *TokenAddr_t, err error) {
+func NewTokenAddr(verify Verifier, except map[string]string, next_ok http.Handler, next_error http.Handler, addr Addr_t, token Token_t, validate ...Validator) (self *TokenAddr_t, err error) {
 	self = &TokenAddr_t{
 		addr:       addr,
 		token:      token,
@@ -58,21 +59,28 @@ func NewTokenAddr(verify Verifier, except map[string]string, next_ok http.Handle
 
 func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var ok bool
+	var err error
 	var count int
 	var payload []byte
-	var next context.Context
 	ts := time.Now()
-	prev := r.Context()
+	ctx := r.Context()
 	for _, token := range self.token(r) {
 		if payload, ok = self.verify.Verify([]byte(token.Value)); ok {
-			if next, ok = self.validate.Validate(prev, ts, token.Name, payload); ok {
-				prev = next
-				count++
+			values := map[string]interface{}{}
+			if err = json.Unmarshal(payload, &values); err != nil {
+				continue
 			}
+			for _, v := range self.validate {
+				if !v.Validate(ts, token.Name, values) {
+					continue
+				}
+			}
+			ctx = context.WithValue(ctx, auth_t(token.Name), values)
+			count++
 		}
 	}
 	if count > 0 {
-		self.next_ok.ServeHTTP(w, r.WithContext(prev))
+		self.next_ok.ServeHTTP(w, r.WithContext(ctx))
 		return
 	}
 	re, ok := self.except.Search(r.URL.Path)
@@ -85,24 +93,31 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	self.next_error.ServeHTTP(w, r)
 }
 
-func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error http.HandlerFunc, token Token_t, validate Validator) http.HandlerFunc {
+func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error http.HandlerFunc, token Token_t, validate ...Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var ok bool
+		var err error
 		var count int
 		var payload []byte
-		var next context.Context
 		ts := time.Now()
-		prev := r.Context()
+		ctx := r.Context()
 		for _, token := range token(r) {
 			if payload, ok = verify.Verify([]byte(token.Value)); ok {
-				if next, ok = validate.Validate(prev, ts, token.Name, payload); ok {
-					prev = next
-					count++
+				values := map[string]interface{}{}
+				if err = json.Unmarshal(payload, &values); err != nil {
+					continue
 				}
+				for _, v := range validate {
+					if !v.Validate(ts, token.Name, values) {
+						continue
+					}
+				}
+				ctx = context.WithValue(ctx, auth_t(token.Name), values)
+				count++
 			}
 		}
 		if count > 0 {
-			next_ok.ServeHTTP(w, r.WithContext(prev))
+			next_ok.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
 		next_error(w, r)

@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	VALIDATOR = &Validator_t{Nbf: 60, Exp: -60}
-	ERROR     = &Unauthorized_t{}
+	EXP   = &Exp_t{Nbf: 60, Exp: -60}
+	ERROR = &Unauthorized_t{}
 )
 
 type auth_t string
