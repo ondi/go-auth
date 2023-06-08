@@ -36,10 +36,10 @@ func (self ValidatorList) Validate(ts time.Time, token_name string, in map[strin
 }
 
 type TokenAddr_t struct {
-	addr       Addr_t
 	token      Token_t
 	verify     Verifier
 	validate   ValidatorList
+	addr       Addr_t
 	except     *tst.Tree1_t[*regexp.Regexp]
 	next_ok    http.Handler
 	next_error http.Handler
@@ -47,10 +47,10 @@ type TokenAddr_t struct {
 
 func NewTokenAddr(verify Verifier, except map[string]string, next_ok http.Handler, next_error http.Handler, addr Addr_t, token Token_t, validate ...Validator) (self *TokenAddr_t, err error) {
 	self = &TokenAddr_t{
-		addr:       addr,
 		token:      token,
 		verify:     verify,
 		validate:   validate,
+		addr:       addr,
 		except:     &tst.Tree1_t[*regexp.Regexp]{},
 		next_ok:    next_ok,
 		next_error: next_error,
@@ -98,39 +98,69 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	self.next_error.ServeHTTP(w, r)
 }
 
-func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error http.HandlerFunc, token Token_t, validate ...Validator) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var count int
-		ts := time.Now()
-		ctx := r.Context()
-		for _, token := range token(r) {
-			if payload, ok := verify.Verify([]byte(token.Value)); ok {
-				var values map[string]interface{}
-				if json.Unmarshal(payload, &values) != nil {
-					continue
-				}
-				if !(ValidatorList)(validate).Validate(ts, token.Name, values) {
-					continue
-				}
-				ctx = WithValue(ctx, token.Name, values)
-				count++
-			}
-		}
-		if count > 0 {
-			next_ok.ServeHTTP(w, r.WithContext(ctx))
-			return
-		}
-		next_error(w, r)
+type TokenOnly_t struct {
+	token      Token_t
+	verify     Verifier
+	validate   ValidatorList
+	next_ok    http.Handler
+	next_error http.Handler
+}
+
+func NewTokenOnly(verify Verifier, next_ok http.Handler, next_error http.Handler, token Token_t, validate ...Validator) *TokenOnly_t {
+	return &TokenOnly_t{
+		token:      token,
+		verify:     verify,
+		validate:   validate,
+		next_ok:    next_ok,
+		next_error: next_error,
 	}
 }
 
-func VerifyAddr(re *regexp.Regexp, next_ok http.HandlerFunc, next_error http.HandlerFunc, addr Addr_t, validate Validator) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if addr := addr(r); re.MatchString(addr) {
-			next_ok.ServeHTTP(w, r)
-		} else {
-			next_error(w, r)
+func (self *TokenOnly_t) ServeHttp(w http.ResponseWriter, r *http.Request) {
+	var count int
+	ts := time.Now()
+	ctx := r.Context()
+	for _, token := range self.token(r) {
+		if payload, ok := self.verify.Verify([]byte(token.Value)); ok {
+			var values map[string]interface{}
+			if json.Unmarshal(payload, &values) != nil {
+				continue
+			}
+			if !self.validate.Validate(ts, token.Name, values) {
+				continue
+			}
+			ctx = WithValue(ctx, token.Name, values)
+			count++
 		}
+	}
+	if count > 0 {
+		self.next_ok.ServeHTTP(w, r.WithContext(ctx))
 		return
 	}
+	self.next_error.ServeHTTP(w, r)
+}
+
+type AddrOnly_t struct {
+	re         *regexp.Regexp
+	addr       Addr_t
+	next_ok    http.Handler
+	next_error http.Handler
+}
+
+func NewAddrOnly(re *regexp.Regexp, next_ok http.Handler, next_error http.Handler, addr Addr_t) *AddrOnly_t {
+	return &AddrOnly_t{
+		re:         re,
+		addr:       addr,
+		next_ok:    next_ok,
+		next_error: next_error,
+	}
+}
+
+func (self *AddrOnly_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if addr := self.addr(r); self.re.MatchString(addr) {
+		self.next_ok.ServeHTTP(w, r)
+	} else {
+		self.next_error.ServeHTTP(w, r)
+	}
+	return
 }
