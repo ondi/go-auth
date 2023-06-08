@@ -68,16 +68,13 @@ func NewTokenAddr(verify Verifier, except map[string]string, next_ok http.Handle
 }
 
 func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var ok bool
-	var err error
 	var count int
-	var payload []byte
 	ts := time.Now()
 	ctx := r.Context()
 	for _, token := range self.token(r) {
-		if payload, ok = self.verify.Verify([]byte(token.Value)); ok {
+		if payload, ok := self.verify.Verify([]byte(token.Value)); ok {
 			var values map[string]interface{}
-			if err = json.Unmarshal(payload, &values); err != nil {
+			if json.Unmarshal(payload, &values) != nil {
 				continue
 			}
 			if !self.validate.Validate(ts, token.Name, values) {
@@ -103,16 +100,13 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error http.HandlerFunc, token Token_t, validate ...Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var ok bool
-		var err error
 		var count int
-		var payload []byte
 		ts := time.Now()
 		ctx := r.Context()
 		for _, token := range token(r) {
-			if payload, ok = verify.Verify([]byte(token.Value)); ok {
+			if payload, ok := verify.Verify([]byte(token.Value)); ok {
 				var values map[string]interface{}
-				if err = json.Unmarshal(payload, &values); err != nil {
+				if json.Unmarshal(payload, &values) != nil {
 					continue
 				}
 				if !(ValidatorList)(validate).Validate(ts, token.Name, values) {
