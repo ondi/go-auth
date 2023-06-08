@@ -21,14 +21,25 @@ type Verifier interface {
 }
 
 type Validator interface {
-	Validate(ts time.Time, token_name string, in map[string]interface{}) (ok bool)
+	Validate(ts time.Time, token_name string, in map[string]interface{}) bool
+}
+
+type ValidatorList []Validator
+
+func (self ValidatorList) Validate(ts time.Time, token_name string, in map[string]interface{}) bool {
+	for _, v := range self {
+		if !v.Validate(ts, token_name, in) {
+			return false
+		}
+	}
+	return true
 }
 
 type TokenAddr_t struct {
 	addr       Addr_t
 	token      Token_t
 	verify     Verifier
-	validate   []Validator
+	validate   ValidatorList
 	except     *tst.Tree1_t[*regexp.Regexp]
 	next_ok    http.Handler
 	next_error http.Handler
@@ -63,17 +74,14 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var payload []byte
 	ts := time.Now()
 	ctx := r.Context()
-NEXT_TOKEN:
 	for _, token := range self.token(r) {
 		if payload, ok = self.verify.Verify([]byte(token.Value)); ok {
 			var values map[string]interface{}
 			if err = json.Unmarshal(payload, &values); err != nil {
 				continue
 			}
-			for _, v := range self.validate {
-				if !v.Validate(ts, token.Name, values) {
-					continue NEXT_TOKEN
-				}
+			if !self.validate.Validate(ts, token.Name, values) {
+				continue
 			}
 			ctx = WithValue(ctx, token.Name, values)
 			count++
@@ -101,17 +109,14 @@ func VerifyToken(verify Verifier, next_ok http.HandlerFunc, next_error http.Hand
 		var payload []byte
 		ts := time.Now()
 		ctx := r.Context()
-	NEXT_TOKEN:
 		for _, token := range token(r) {
 			if payload, ok = verify.Verify([]byte(token.Value)); ok {
 				var values map[string]interface{}
 				if err = json.Unmarshal(payload, &values); err != nil {
 					continue
 				}
-				for _, v := range validate {
-					if !v.Validate(ts, token.Name, values) {
-						continue NEXT_TOKEN
-					}
+				if !(ValidatorList)(validate).Validate(ts, token.Name, values) {
+					continue
 				}
 				ctx = WithValue(ctx, token.Name, values)
 				count++
