@@ -64,7 +64,7 @@ func (self Verifier_t) Names() (res []string) {
 }
 
 func (self Verifier_t) Verify(token []byte) (payload []byte, ok bool) {
-	alg, bits, _, payload, signature, err := jwt.Parse([]byte(token))
+	alg, bits, _, payload, signature, err := jwt.Parse(token)
 	if err != nil {
 		return
 	}

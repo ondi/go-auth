@@ -76,15 +76,17 @@ func NewTokenOnly(next_ok http.Handler, next_error http.Handler, token Token_t, 
 }
 
 func (self *TokenOnly_t) ServeHttp(w http.ResponseWriter, r *http.Request) {
+	var ok bool
+	var payload []byte
+	var values map[string]interface{}
 	ts := time.Now()
 	ctx := r.Context()
 	required := Required_t{}
 	for _, token := range self.token(r) {
-		payload, ok := self.verify.Verify([]byte(token.Value))
-		if !ok {
+		if payload, ok = self.verify.Verify(token.Value); !ok {
 			continue
 		}
-		var values map[string]interface{}
+		values = map[string]interface{}{}
 		if json.Unmarshal(payload, &values) != nil {
 			continue
 		}
