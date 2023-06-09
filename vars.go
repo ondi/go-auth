@@ -44,6 +44,10 @@ func AuthAny[T any](ctx context.Context, name string) (res T) {
 	return
 }
 
+func REQUIRED() Required_t {
+	return Required_t{"AUTH": {}}
+}
+
 func TOKEN(r *http.Request) (out []TokenValue_t) {
 	var ix int
 	var token string

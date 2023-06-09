@@ -15,6 +15,7 @@ import (
 
 type Addr_t func(r *http.Request) string
 type Token_t func(r *http.Request) []TokenValue_t
+type Required_t map[string]struct{}
 
 type Verifier interface {
 	Verify(token []byte) (payload []byte, ok bool)
@@ -40,12 +41,12 @@ type TokenAddr_t struct {
 	addr_only  *AddrOnly_t
 }
 
-func NewTokenAddr(next_ok http.Handler, next_error http.Handler, token Token_t, addr Addr_t, except map[string]string, verify Verifier, validate ...Validator) (self *TokenAddr_t, err error) {
+func NewTokenAddr(next_ok http.Handler, next_error http.Handler, token Token_t, addr Addr_t, except map[string]string, required Required_t, verify Verifier, validate ...Validator) (self *TokenAddr_t, err error) {
 	self = &TokenAddr_t{}
 	if self.addr_only, err = NewAddrOnly(next_ok, next_error, addr, except); err != nil {
 		return
 	}
-	self.token_only, err = NewTokenOnly(next_ok, self.addr_only, token, verify, validate...)
+	self.token_only, err = NewTokenOnly(next_ok, self.addr_only, token, required, verify, validate...)
 	return
 }
 
@@ -57,11 +58,12 @@ type TokenOnly_t struct {
 	token      Token_t
 	verify     Verifier
 	validate   ValidatorList
+	required   Required_t
 	next_ok    http.Handler
 	next_error http.Handler
 }
 
-func NewTokenOnly(next_ok http.Handler, next_error http.Handler, token Token_t, verify Verifier, validate ...Validator) (self *TokenOnly_t, err error) {
+func NewTokenOnly(next_ok http.Handler, next_error http.Handler, token Token_t, required Required_t, verify Verifier, validate ...Validator) (self *TokenOnly_t, err error) {
 	self = &TokenOnly_t{
 		token:      token,
 		verify:     verify,
@@ -73,9 +75,9 @@ func NewTokenOnly(next_ok http.Handler, next_error http.Handler, token Token_t, 
 }
 
 func (self *TokenOnly_t) ServeHttp(w http.ResponseWriter, r *http.Request) {
-	var count int
 	ts := time.Now()
 	ctx := r.Context()
+	required := Required_t{}
 	for _, token := range self.token(r) {
 		if payload, ok := self.verify.Verify([]byte(token.Value)); ok {
 			var values map[string]interface{}
@@ -86,10 +88,12 @@ func (self *TokenOnly_t) ServeHttp(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			ctx = WithValue(ctx, token.Name, values)
-			count++
+			if _, ok = self.required[token.Name]; ok {
+				required[token.Name] = struct{}{}
+			}
 		}
 	}
-	if count > 0 {
+	if len(self.required) == len(required) {
 		self.next_ok.ServeHTTP(w, r.WithContext(ctx))
 		return
 	}
