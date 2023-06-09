@@ -36,21 +36,21 @@ func (self ValidatorList) Validate(ts time.Time, token_name string, in map[strin
 }
 
 type TokenAddr_t struct {
-	to *TokenOnly_t
-	ao *AddrOnly_t
+	token_only *TokenOnly_t
+	addr_only  *AddrOnly_t
 }
 
 func NewTokenAddr(next_ok http.Handler, next_error http.Handler, token Token_t, addr Addr_t, except map[string]string, verify Verifier, validate ...Validator) (self *TokenAddr_t, err error) {
 	self = &TokenAddr_t{}
-	if self.ao, err = NewAddrOnly(next_ok, next_error, addr, except); err != nil {
+	if self.addr_only, err = NewAddrOnly(next_ok, next_error, addr, except); err != nil {
 		return
 	}
-	self.to, err = NewTokenOnly(next_ok, self.ao, token, verify, validate...)
+	self.token_only, err = NewTokenOnly(next_ok, self.addr_only, token, verify, validate...)
 	return
 }
 
 func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	self.to.ServeHttp(w, r)
+	self.token_only.ServeHttp(w, r)
 }
 
 type TokenOnly_t struct {
@@ -106,6 +106,7 @@ type AddrOnly_t struct {
 func NewAddrOnly(next_ok http.Handler, next_error http.Handler, addr Addr_t, except map[string]string) (self *AddrOnly_t, err error) {
 	self = &AddrOnly_t{
 		addr:       addr,
+		except:     &tst.Tree1_t[*regexp.Regexp]{},
 		next_ok:    next_ok,
 		next_error: next_error,
 	}
@@ -122,13 +123,11 @@ func NewAddrOnly(next_ok http.Handler, next_error http.Handler, addr Addr_t, exc
 }
 
 func (self *AddrOnly_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	re, ok := self.except.Search(r.URL.Path)
-	if ok {
+	if re, ok := self.except.Search(r.URL.Path); ok {
 		if addr := self.addr(r); re.MatchString(addr) {
 			self.next_ok.ServeHTTP(w, r)
 			return
 		}
 	}
 	self.next_error.ServeHTTP(w, r)
-	return
 }
