@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	EXP   = &Exp_t{Nbf: 60, Exp: -60}
-	ERROR = Serve401_t{}
+	EXP      = &Exp_t{Nbf: 60, Exp: -60}
+	ERROR    = Serve401_t{}
+	REQUIRED = Required_t{"AUTH": {}}
 )
 
 type auth_t string
@@ -42,10 +43,6 @@ func AuthMap(ctx context.Context, name string) (res map[string]interface{}) {
 func AuthAny[T any](ctx context.Context, name string) (res T) {
 	res, _ = ctx.Value(auth_t(name)).(T)
 	return
-}
-
-func REQUIRED() Required_t {
-	return Required_t{"AUTH": {}}
 }
 
 func TOKEN(r *http.Request) (out []TokenValue_t) {
