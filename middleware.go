@@ -46,7 +46,7 @@ func NewTokenAddr(next_ok http.Handler, next_error http.Handler, token Token_t, 
 	if self.addr_only, err = NewAddrOnly(next_ok, next_error, addr, except); err != nil {
 		return
 	}
-	self.token_only, err = NewTokenOnly(next_ok, self.addr_only, token, required, verify, validate...)
+	self.token_only = NewTokenOnly(next_ok, self.addr_only, token, required, verify, validate...)
 	return
 }
 
@@ -63,7 +63,7 @@ type TokenOnly_t struct {
 	next_error http.Handler
 }
 
-func NewTokenOnly(next_ok http.Handler, next_error http.Handler, token Token_t, required Required_t, verify Verifier, validate ...Validator) (self *TokenOnly_t, err error) {
+func NewTokenOnly(next_ok http.Handler, next_error http.Handler, token Token_t, required Required_t, verify Verifier, validate ...Validator) (self *TokenOnly_t) {
 	self = &TokenOnly_t{
 		token:      token,
 		verify:     verify,
