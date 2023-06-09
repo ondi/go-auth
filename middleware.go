@@ -68,6 +68,7 @@ func NewTokenOnly(next_ok http.Handler, next_error http.Handler, token Token_t, 
 		token:      token,
 		verify:     verify,
 		validate:   validate,
+		required:   required,
 		next_ok:    next_ok,
 		next_error: next_error,
 	}
@@ -79,18 +80,20 @@ func (self *TokenOnly_t) ServeHttp(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	required := Required_t{}
 	for _, token := range self.token(r) {
-		if payload, ok := self.verify.Verify([]byte(token.Value)); ok {
-			var values map[string]interface{}
-			if json.Unmarshal(payload, &values) != nil {
-				continue
-			}
-			if !self.validate.Validate(ts, token.Name, values) {
-				continue
-			}
-			ctx = WithValue(ctx, token.Name, values)
-			if _, ok = self.required[token.Name]; ok {
-				required[token.Name] = struct{}{}
-			}
+		payload, ok := self.verify.Verify([]byte(token.Value))
+		if !ok {
+			continue
+		}
+		var values map[string]interface{}
+		if json.Unmarshal(payload, &values) != nil {
+			continue
+		}
+		if !self.validate.Validate(ts, token.Name, values) {
+			continue
+		}
+		ctx = WithValue(ctx, token.Name, values)
+		if _, ok = self.required[token.Name]; ok {
+			required[token.Name] = struct{}{}
 		}
 	}
 	if len(self.required) == len(required) {
