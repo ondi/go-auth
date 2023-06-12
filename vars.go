@@ -13,9 +13,10 @@ import (
 )
 
 var (
-	EXP      = &Exp_t{Nbf: 60, Exp: -60}
-	ERROR    = Serve401_t{}
-	REQUIRED = Required_t{"Authorization": {}}
+	EXP           = &Exp_t{Nbf: 60, Exp: -60}
+	ERROR         = Serve401_t{}
+	REQUIRED      = Required_t{AUTHORIZATION: {}}
+	AUTHORIZATION = "Authorization"
 )
 
 type auth_t string
@@ -43,14 +44,14 @@ func Auth(ctx context.Context, name string) (res map[string]interface{}) {
 func TOKEN(r *http.Request) (out []TokenValue_t) {
 	var ix int
 	var token string
-	for _, token = range r.Header["Authorization"] {
+	for _, token = range r.Header[AUTHORIZATION] {
 		ix = strings.IndexByte(token, ' ')
-		out = append(out, TokenValue_t{Name: "Authorization", Value: []byte(token[ix+1:])})
+		out = append(out, TokenValue_t{Name: AUTHORIZATION, Value: []byte(token[ix+1:])})
 	}
-	if c, err := r.Cookie("Authorization"); err == nil {
+	if c, err := r.Cookie(AUTHORIZATION); err == nil {
 		if token, err = url.QueryUnescape(c.Value); err == nil {
 			ix = strings.IndexByte(token, ' ')
-			out = append(out, TokenValue_t{Name: "Authorization", Value: []byte(token[ix+1:])})
+			out = append(out, TokenValue_t{Name: AUTHORIZATION, Value: []byte(token[ix+1:])})
 		}
 	}
 	return
