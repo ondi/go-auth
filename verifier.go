@@ -15,8 +15,8 @@ import (
 type Verifier_t []jwt.Verifier
 
 func NewVerifierGlob(pattern string) (res Verifier_t, err error) {
-	var matched []string
-	if matched, err = filepath.Glob(pattern); err != nil {
+	matched, err := filepath.Glob(pattern)
+	if err != nil {
 		return
 	}
 	return NewVerifier(matched...)
