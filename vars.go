@@ -32,13 +32,20 @@ type TokenValue_t struct {
 	Value []byte
 }
 
+func Auth(ctx context.Context, name string) (res map[string]interface{}) {
+	res, _ = ctx.Value(auth_t(name)).(map[string]interface{})
+	return
+}
+
 func WithValue(ctx context.Context, name string, value interface{}) context.Context {
 	return context.WithValue(ctx, auth_t(name), value)
 }
 
-func Auth(ctx context.Context, name string) (res map[string]interface{}) {
-	res, _ = ctx.Value(auth_t(name)).(map[string]interface{})
-	return
+func WithContext(ctx context.Context, r *http.Request, count int) *http.Request {
+	if count > 0 {
+		return r.WithContext(ctx)
+	}
+	return r
 }
 
 func TOKEN(r *http.Request) (out []TokenValue_t) {

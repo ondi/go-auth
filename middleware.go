@@ -76,33 +76,31 @@ func NewTokenOnly(next_ok http.Handler, next_error http.Handler, token Token_t, 
 }
 
 func (self *TokenOnly_t) ServeHttp(w http.ResponseWriter, r *http.Request) {
-	var ok bool
-	var payload []byte
-	var values map[string]interface{}
+	var count int
 	ts := time.Now()
 	ctx := r.Context()
 	required := Required_t{}
 	for _, token := range self.token(r) {
-		if payload, ok = self.verify.Verify(token.Value); !ok {
-			continue
-		}
-		values = map[string]interface{}{}
-		if json.Unmarshal(payload, &values) != nil {
-			continue
-		}
-		if !self.validate.Validate(ts, token.Name, values) {
-			continue
-		}
-		ctx = WithValue(ctx, token.Name, values)
-		if _, ok = self.required[token.Name]; ok {
-			required[token.Name] = struct{}{}
+		if payload, ok := self.verify.Verify(token.Value); ok {
+			var value map[string]interface{}
+			if json.Unmarshal(payload, &value) != nil {
+				continue
+			}
+			if !self.validate.Validate(ts, token.Name, value) {
+				continue
+			}
+			count++
+			ctx = WithValue(ctx, token.Name, value)
+			if _, ok = self.required[token.Name]; ok {
+				required[token.Name] = struct{}{}
+			}
 		}
 	}
 	if len(self.required) == len(required) {
-		self.next_ok.ServeHTTP(w, r.WithContext(ctx))
-		return
+		self.next_ok.ServeHTTP(w, WithContext(ctx, r, count))
+	} else {
+		self.next_error.ServeHTTP(w, WithContext(ctx, r, count))
 	}
-	self.next_error.ServeHTTP(w, r.WithContext(ctx))
 }
 
 type AddrOnly_t struct {
