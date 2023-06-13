@@ -102,7 +102,7 @@ func (self *TokenOnly_t) ServeHttp(w http.ResponseWriter, r *http.Request) {
 		self.next_ok.ServeHTTP(w, r.WithContext(ctx))
 		return
 	}
-	self.next_error.ServeHTTP(w, r)
+	self.next_error.ServeHTTP(w, r.WithContext(ctx))
 }
 
 type AddrOnly_t struct {
