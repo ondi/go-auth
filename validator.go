@@ -29,5 +29,5 @@ func (self *Exp_t) Validate(ts time.Time, in Token) (ok bool) {
 			return
 		}
 	}
-	return
+	return true
 }
