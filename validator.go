@@ -14,18 +14,25 @@ type Exp_t struct {
 }
 
 func (self *Exp_t) Validate(ts time.Time, in Token) (ok bool) {
+	var test float64
 	payload := in.GetPayload()
 	// not before
-	temp, ok := payload["nbf"].(float64)
+	temp, ok := payload["nbf"]
 	if ok {
-		if ok = ts.Unix()+self.Nbf >= int64(temp); !ok {
+		if test, ok = temp.(float64); !ok {
+			return
+		}
+		if ok = ts.Unix()+self.Nbf >= int64(test); !ok {
 			return
 		}
 	}
 	// expire
-	temp, ok = payload["exp"].(float64)
+	temp, ok = payload["exp"]
 	if ok {
-		if ok = ts.Unix()+self.Exp < int64(temp); !ok {
+		if test, ok = temp.(float64); !ok {
+			return
+		}
+		if ok = ts.Unix()+self.Exp < int64(test); !ok {
 			return
 		}
 	}
