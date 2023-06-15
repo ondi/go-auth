@@ -24,18 +24,18 @@ type Token interface {
 }
 
 type Verifier interface {
-	Verify(token []byte) (payload []byte, ok bool)
+	Verify(in []byte) (payload []byte, ok bool)
 }
 
 type Validator interface {
-	Validate(ts time.Time, token_name string, in map[string]interface{}) bool
+	Validate(ts time.Time, in Token) bool
 }
 
 type Validators []Validator
 
-func (self Validators) Validate(ts time.Time, token_name string, in map[string]interface{}) bool {
+func (self Validators) Validate(ts time.Time, in Token) bool {
 	for _, v := range self {
-		if !v.Validate(ts, token_name, in) {
+		if !v.Validate(ts, in) {
 			return false
 		}
 	}
@@ -91,7 +91,7 @@ func (self *TokenOnly_t) ServeHttp(w http.ResponseWriter, r *http.Request) {
 			if token.Unmarshal(payload) != nil {
 				continue
 			}
-			if !self.validate.Validate(ts, token.GetName(), token.GetPayload()) {
+			if !self.validate.Validate(ts, token) {
 				continue
 			}
 			count++
