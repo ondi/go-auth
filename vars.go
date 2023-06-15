@@ -6,6 +6,7 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"net"
 	"net/http"
 	"net/url"
@@ -28,8 +29,25 @@ func (Serve401_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type TokenValue_t struct {
-	Name  string
-	Value []byte
+	Name    string
+	Value   []byte
+	Payload map[string]interface{}
+}
+
+func (self *TokenValue_t) GetName() string {
+	return self.Name
+}
+
+func (self *TokenValue_t) GetValue() []byte {
+	return self.Value
+}
+
+func (self *TokenValue_t) GetPayload() map[string]interface{} {
+	return self.Payload
+}
+
+func (self *TokenValue_t) Unmarshal(payload []byte) (err error) {
+	return json.Unmarshal(payload, &self.Payload)
 }
 
 func Auth(ctx context.Context, name string) (res map[string]interface{}) {
@@ -48,17 +66,17 @@ func WithContext(ctx context.Context, r *http.Request, count int) *http.Request 
 	return r
 }
 
-func TOKEN(r *http.Request) (out []TokenValue_t) {
+func TOKEN(r *http.Request) (out []Token) {
 	var ix int
 	var token string
 	for _, token = range r.Header[AUTHORIZATION] {
 		ix = strings.IndexByte(token, ' ')
-		out = append(out, TokenValue_t{Name: AUTHORIZATION, Value: []byte(token[ix+1:])})
+		out = append(out, &TokenValue_t{Name: AUTHORIZATION, Value: []byte(token[ix+1:])})
 	}
 	if c, err := r.Cookie(AUTHORIZATION); err == nil {
 		if token, err = url.QueryUnescape(c.Value); err == nil {
 			ix = strings.IndexByte(token, ' ')
-			out = append(out, TokenValue_t{Name: AUTHORIZATION, Value: []byte(token[ix+1:])})
+			out = append(out, &TokenValue_t{Name: AUTHORIZATION, Value: []byte(token[ix+1:])})
 		}
 	}
 	return

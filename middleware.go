@@ -5,7 +5,6 @@
 package auth
 
 import (
-	"encoding/json"
 	"net/http"
 	"regexp"
 	"time"
@@ -14,8 +13,15 @@ import (
 )
 
 type Addr_t func(r *http.Request) string
-type Token_t func(r *http.Request) []TokenValue_t
+type Token_t func(r *http.Request) []Token
 type Required_t map[string]struct{}
+
+type Token interface {
+	GetName() string
+	GetValue() []byte
+	GetPayload() map[string]interface{}
+	Unmarshal(payload []byte) error
+}
 
 type Verifier interface {
 	Verify(token []byte) (payload []byte, ok bool)
@@ -25,9 +31,9 @@ type Validator interface {
 	Validate(ts time.Time, token_name string, in map[string]interface{}) bool
 }
 
-type ValidatorList []Validator
+type Validators []Validator
 
-func (self ValidatorList) Validate(ts time.Time, token_name string, in map[string]interface{}) bool {
+func (self Validators) Validate(ts time.Time, token_name string, in map[string]interface{}) bool {
 	for _, v := range self {
 		if !v.Validate(ts, token_name, in) {
 			return false
@@ -57,7 +63,7 @@ func (self *TokenAddr_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type TokenOnly_t struct {
 	token      Token_t
 	verify     Verifier
-	validate   ValidatorList
+	validate   Validators
 	required   Required_t
 	next_ok    http.Handler
 	next_error http.Handler
@@ -81,18 +87,17 @@ func (self *TokenOnly_t) ServeHttp(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	required := Required_t{}
 	for _, token := range self.token(r) {
-		if payload, ok := self.verify.Verify(token.Value); ok {
-			var value map[string]interface{}
-			if json.Unmarshal(payload, &value) != nil {
+		if payload, ok := self.verify.Verify(token.GetValue()); ok {
+			if token.Unmarshal(payload) != nil {
 				continue
 			}
-			if !self.validate.Validate(ts, token.Name, value) {
+			if !self.validate.Validate(ts, token.GetName(), token.GetPayload()) {
 				continue
 			}
 			count++
-			ctx = WithValue(ctx, token.Name, value)
-			if _, ok = self.required[token.Name]; ok {
-				required[token.Name] = struct{}{}
+			ctx = WithValue(ctx, token.GetName(), token.GetPayload())
+			if _, ok = self.required[token.GetName()]; ok {
+				required[token.GetName()] = struct{}{}
 			}
 		}
 	}
