@@ -20,7 +20,7 @@ type Token interface {
 	GetName() string
 	GetValue() []byte
 	GetPayload() map[string]interface{}
-	Unmarshal(payload []byte) error
+	SetPayload(payload []byte) error
 }
 
 type Verifier interface {
@@ -88,7 +88,7 @@ func (self *TokenOnly_t) ServeHttp(w http.ResponseWriter, r *http.Request) {
 	required := Required_t{}
 	for _, token := range self.token(r) {
 		if payload, ok := self.verify.Verify(token.GetValue()); ok {
-			if token.Unmarshal(payload) != nil {
+			if token.SetPayload(payload) != nil {
 				continue
 			}
 			if !self.validate.Validate(ts, token) {

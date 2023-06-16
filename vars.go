@@ -46,7 +46,7 @@ func (self *TokenValue_t) GetPayload() map[string]interface{} {
 	return self.Payload
 }
 
-func (self *TokenValue_t) Unmarshal(payload []byte) (err error) {
+func (self *TokenValue_t) SetPayload(payload []byte) (err error) {
 	return json.Unmarshal(payload, &self.Payload)
 }
 
