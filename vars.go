@@ -15,17 +15,19 @@ import (
 
 var (
 	EXP           = &Exp_t{Nbf: 60, Exp: -60}
-	ERROR         = Serve401_t{}
+	ERROR         = &WriteStatus_t{Status: http.StatusUnauthorized}
 	REQUIRED      = Required_t{AUTHORIZATION: {}}
 	AUTHORIZATION = "Authorization"
 )
 
 type auth_t string
 
-type Serve401_t struct{}
+type WriteStatus_t struct {
+	Status int
+}
 
-func (Serve401_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusUnauthorized)
+func (self *WriteStatus_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(self.Status)
 }
 
 type TokenValue_t struct {
