@@ -33,7 +33,7 @@ func (self *WriteStatus_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type TokenValue_t struct {
 	Name    string
 	Value   []byte
-	Payload map[string]interface{}
+	Payload PAYLOAD_TYPE
 }
 
 func (self *TokenValue_t) GetName() string {
@@ -44,7 +44,7 @@ func (self *TokenValue_t) GetValue() []byte {
 	return self.Value
 }
 
-func (self *TokenValue_t) GetPayload() map[string]interface{} {
+func (self *TokenValue_t) GetPayload() PAYLOAD_TYPE {
 	return self.Payload
 }
 
@@ -52,8 +52,8 @@ func (self *TokenValue_t) SetPayload(payload []byte) (err error) {
 	return json.Unmarshal(payload, &self.Payload)
 }
 
-func Auth(ctx context.Context, name string) (res map[string]interface{}) {
-	res, _ = ctx.Value(auth_t(name)).(map[string]interface{})
+func Auth[T any](ctx context.Context, name string) (res T) {
+	res, _ = ctx.Value(auth_t(name)).(T)
 	return
 }
 
@@ -68,7 +68,7 @@ func WithContext(ctx context.Context, r *http.Request, count int) *http.Request 
 	return r
 }
 
-func TOKEN(r *http.Request) (out []Token) {
+func TOKEN(r *http.Request) (out []Token[PAYLOAD_TYPE]) {
 	var ix int
 	var token string
 	for _, token = range r.Header[AUTHORIZATION] {

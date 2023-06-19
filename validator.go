@@ -13,7 +13,7 @@ type Exp_t struct {
 	Exp int64
 }
 
-func (self *Exp_t) Validate(ts time.Time, in Token) (ok bool) {
+func (self *Exp_t) Validate(ts time.Time, in Token[PAYLOAD_TYPE]) (ok bool) {
 	var test float64
 	payload := in.GetPayload()
 	// not before
