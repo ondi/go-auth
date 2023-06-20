@@ -20,7 +20,7 @@ type Sign_t struct {
 	jwt.Signer
 }
 
-func NewSign(file string) (out Signer, err error) {
+func NewSign(file string) (out *Sign_t, err error) {
 	buf, err := ioutil.ReadFile(file)
 	if err != nil {
 		return

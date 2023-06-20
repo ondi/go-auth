@@ -37,9 +37,9 @@ type GetAddr interface {
 	Addr(r *http.Request) string
 }
 
-func Auth[T any](ctx context.Context, name string) (res T) {
-	res, _ = ctx.Value(auth_t(name)).(T)
-	return
+// cast to PAYLOAD_TYPE_GET
+func Auth(ctx context.Context, name string) interface{} {
+	return ctx.Value(auth_t(name))
 }
 
 func WithValue(ctx context.Context, name string, value interface{}) context.Context {

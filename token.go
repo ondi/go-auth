@@ -17,6 +17,10 @@ const AUTHORIZATION = "Authorization"
 
 type PAYLOAD_TYPE = map[string]interface{}
 
+type PAYLOAD_TYPE_GET interface {
+	GetPayload() PAYLOAD_TYPE
+}
+
 type Token_t struct {
 	Name       string
 	Value      []byte
@@ -52,7 +56,7 @@ type GetTokens_t struct {
 	validators []Validator[PAYLOAD_TYPE]
 }
 
-func NewGetTokens(validators ...Validator[PAYLOAD_TYPE]) GetTokens {
+func NewGetTokens(validators ...Validator[PAYLOAD_TYPE]) *GetTokens_t {
 	return &GetTokens_t{validators: validators}
 }
 
@@ -75,7 +79,7 @@ func (self *GetTokens_t) Tokens(r *http.Request) (out []Token) {
 type GetAddr_t struct {
 }
 
-func NewGetAddr() GetAddr {
+func NewGetAddr() *GetAddr_t {
 	return &GetAddr_t{}
 }
 
@@ -92,7 +96,7 @@ func (self *GetAddr_t) Addr(r *http.Request) (out string) {
 	return r.RemoteAddr
 }
 
-func NewError() http.Handler {
+func NewError() *WriteStatus_t {
 	return &WriteStatus_t{Status: http.StatusUnauthorized}
 }
 
@@ -105,7 +109,7 @@ type Exp_t struct {
 	Exp int64
 }
 
-func NewExp() Validator[PAYLOAD_TYPE] {
+func NewExp() *Exp_t {
 	return &Exp_t{Nbf: 60, Exp: -60}
 }
 
