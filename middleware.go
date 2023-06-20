@@ -5,6 +5,7 @@
 package auth
 
 import (
+	"context"
 	"net/http"
 	"regexp"
 	"time"
@@ -12,35 +13,49 @@ import (
 	"github.com/ondi/go-tst"
 )
 
-type Addr_t func(r *http.Request) string
-type Token_t[T any] func(r *http.Request) []Token[T]
+var (
+	EXP           = &Exp_t{Nbf: 60, Exp: -60}
+	ERROR         = &WriteStatus_t{Status: http.StatusUnauthorized}
+	REQUIRED      = Required_t{AUTHORIZATION: {}}
+	AUTHORIZATION = "Authorization"
+)
+
+type auth_t string
+
+type GetAddr_t func(r *http.Request) string
+type GetToken_t[T any] func(r *http.Request) []Token[T]
 type Required_t map[string]struct{}
 type PAYLOAD_TYPE = map[string]interface{}
-
-type Token[T any] interface {
-	GetName() string
-	GetValue() []byte
-	GetPayload() T
-	SetPayload(payload []byte) error
-}
 
 type Verifier interface {
 	Verify(in []byte) (payload []byte, ok bool)
 }
 
 type Validator[T any] interface {
-	Validate(ts time.Time, in Token[T]) bool
+	Validate(ts time.Time, name string, in T) bool
 }
 
-type Validators[T any] []Validator[T]
+type Token[T any] interface {
+	GetName() string
+	GetPayload() T
+	Verify(in Verifier) bool
+	Validate(ts time.Time, in []Validator[T]) bool
+}
 
-func (self Validators[T]) Validate(ts time.Time, in Token[T]) bool {
-	for _, v := range self {
-		if !v.Validate(ts, in) {
-			return false
-		}
+func Auth[T any](ctx context.Context, name string) (res T) {
+	res, _ = ctx.Value(auth_t(name)).(T)
+	return
+}
+
+func WithValue(ctx context.Context, name string, value interface{}) context.Context {
+	return context.WithValue(ctx, auth_t(name), value)
+}
+
+func WithContext(ctx context.Context, r *http.Request, count int) *http.Request {
+	if count > 0 {
+		return r.WithContext(ctx)
 	}
-	return true
+	return r
 }
 
 type TokenAddr_t[T any] struct {
@@ -48,12 +63,12 @@ type TokenAddr_t[T any] struct {
 	addr_only  *AddrOnly_t
 }
 
-func NewTokenAddr[T any](next_ok http.Handler, next_error http.Handler, token Token_t[T], addr Addr_t, except map[string]string, required Required_t, verify Verifier, validate ...Validator[T]) (self *TokenAddr_t[T], err error) {
+func NewTokenAddr[T any](next_ok http.Handler, next_error http.Handler, token GetToken_t[T], addr GetAddr_t, except map[string]string, required Required_t, verifier Verifier, validators ...Validator[T]) (self *TokenAddr_t[T], err error) {
 	self = &TokenAddr_t[T]{}
 	if self.addr_only, err = NewAddrOnly(next_ok, next_error, addr, except); err != nil {
 		return
 	}
-	self.token_only = NewTokenOnly(next_ok, self.addr_only, token, required, verify, validate...)
+	self.token_only = NewTokenOnly(next_ok, self.addr_only, token, required, verifier, validators...)
 	return
 }
 
@@ -62,19 +77,19 @@ func (self *TokenAddr_t[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type TokenOnly_t[T any] struct {
-	token      Token_t[T]
-	verify     Verifier
-	validate   Validators[T]
+	token      GetToken_t[T]
+	verifier   Verifier
+	validators []Validator[T]
 	required   Required_t
 	next_ok    http.Handler
 	next_error http.Handler
 }
 
-func NewTokenOnly[T any](next_ok http.Handler, next_error http.Handler, token Token_t[T], required Required_t, verify Verifier, validate ...Validator[T]) (self *TokenOnly_t[T]) {
+func NewTokenOnly[T any](next_ok http.Handler, next_error http.Handler, token GetToken_t[T], required Required_t, verifier Verifier, validators ...Validator[T]) (self *TokenOnly_t[T]) {
 	self = &TokenOnly_t[T]{
 		token:      token,
-		verify:     verify,
-		validate:   validate,
+		verifier:   verifier,
+		validators: validators,
 		required:   required,
 		next_ok:    next_ok,
 		next_error: next_error,
@@ -88,17 +103,13 @@ func (self *TokenOnly_t[T]) ServeHttp(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	required := Required_t{}
 	for _, token := range self.token(r) {
-		if payload, ok := self.verify.Verify(token.GetValue()); ok {
-			if token.SetPayload(payload) != nil {
-				continue
-			}
-			if !self.validate.Validate(ts, token) {
-				continue
-			}
-			count++
-			ctx = WithValue(ctx, token.GetName(), token.GetPayload())
-			if _, ok = self.required[token.GetName()]; ok {
-				required[token.GetName()] = struct{}{}
+		if token.Verify(self.verifier) {
+			if token.Validate(ts, self.validators) {
+				count++
+				ctx = WithValue(ctx, token.GetName(), token.GetPayload())
+				if _, ok := self.required[token.GetName()]; ok {
+					required[token.GetName()] = struct{}{}
+				}
 			}
 		}
 	}
@@ -110,13 +121,13 @@ func (self *TokenOnly_t[T]) ServeHttp(w http.ResponseWriter, r *http.Request) {
 }
 
 type AddrOnly_t struct {
-	addr       Addr_t
+	addr       GetAddr_t
 	except     *tst.Tree1_t[*regexp.Regexp]
 	next_ok    http.Handler
 	next_error http.Handler
 }
 
-func NewAddrOnly(next_ok http.Handler, next_error http.Handler, addr Addr_t, except map[string]string) (self *AddrOnly_t, err error) {
+func NewAddrOnly(next_ok http.Handler, next_error http.Handler, addr GetAddr_t, except map[string]string) (self *AddrOnly_t, err error) {
 	self = &AddrOnly_t{
 		addr:       addr,
 		except:     &tst.Tree1_t[*regexp.Regexp]{},
@@ -143,4 +154,12 @@ func (self *AddrOnly_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	self.next_error.ServeHTTP(w, r)
+}
+
+type WriteStatus_t struct {
+	Status int
+}
+
+func (self *WriteStatus_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(self.Status)
 }
