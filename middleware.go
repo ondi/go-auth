@@ -102,7 +102,7 @@ type Basic_t struct {
 	next_error http.Handler
 }
 
-func NewBasic(next_ok http.Handler, next_error http.Handler, tokens GetTokens, passwords map[string]string) (self *Basic_t, err error) {
+func NewBasic(next_ok http.Handler, next_error http.Handler, tokens GetTokens, passwords map[string]string) (self *Basic_t) {
 	self = &Basic_t{
 		tokens:     tokens,
 		passwords:  &tst.Tree1_t[BasicVerify_t]{},
