@@ -68,7 +68,7 @@ func NewBearer(next_ok http.Handler, next_error http.Handler, tokens GetTokens, 
 	return
 }
 
-func (self *Bearer_t) ServeHttp(w http.ResponseWriter, r *http.Request) {
+func (self *Bearer_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var count int
 	ts := time.Now()
 	ctx := r.Context()
