@@ -6,7 +6,6 @@ package auth
 
 import (
 	"encoding/json"
-	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -21,22 +20,22 @@ type PAYLOAD_TYPE_GET interface {
 	GetPayload() PAYLOAD_TYPE
 }
 
-type Token_t struct {
+type TokenBearer_t struct {
 	Name       string
 	Value      []byte
 	Payload    PAYLOAD_TYPE
 	Validators []Validator[PAYLOAD_TYPE]
 }
 
-func (self *Token_t) GetName() string {
+func (self *TokenBearer_t) GetName() string {
 	return self.Name
 }
 
-func (self *Token_t) GetPayload() PAYLOAD_TYPE {
+func (self *TokenBearer_t) GetPayload() PAYLOAD_TYPE {
 	return self.Payload
 }
 
-func (self *Token_t) VerifyAndValidate(in Verifier, ts time.Time) (ok bool) {
+func (self *TokenBearer_t) VerifyAndValidate(in Verifier, ts time.Time) (ok bool) {
 	payload, ok := in.Verify(self.Value)
 	if !ok {
 		return
@@ -52,48 +51,69 @@ func (self *Token_t) VerifyAndValidate(in Verifier, ts time.Time) (ok bool) {
 	return true
 }
 
-type GetTokens_t struct {
+type TokenBasic_t struct {
+	Name  string
+	Value []byte
+}
+
+func (self *TokenBasic_t) GetName() string {
+	return self.Name
+}
+
+func (self *TokenBasic_t) VerifyAndValidate(in Verifier, ts time.Time) (ok bool) {
+	_, ok = in.Verify(self.Value)
+	return
+}
+
+type GetBearer_t struct {
 	validators []Validator[PAYLOAD_TYPE]
 }
 
-func NewGetTokens(validators ...Validator[PAYLOAD_TYPE]) *GetTokens_t {
-	return &GetTokens_t{validators: validators}
+func NewGetBearer(validators ...Validator[PAYLOAD_TYPE]) *GetBearer_t {
+	return &GetBearer_t{validators: validators}
 }
 
-func (self *GetTokens_t) Tokens(r *http.Request) (out []Token) {
+func (self *GetBearer_t) Tokens(r *http.Request) (out []Token) {
 	var ix int
 	var token string
 	for _, token = range r.Header[AUTHORIZATION] {
-		ix = strings.IndexByte(token, ' ')
-		out = append(out, &Token_t{Name: AUTHORIZATION, Value: []byte(token[ix+1:]), Validators: self.validators})
+		if ix = strings.IndexByte(token, ' '); ix > -1 && token[:ix] == "Bearer" {
+			out = append(out, &TokenBearer_t{Name: AUTHORIZATION, Value: []byte(token[ix+1:]), Validators: self.validators})
+		}
 	}
 	if c, err := r.Cookie(AUTHORIZATION); err == nil {
 		if token, err = url.QueryUnescape(c.Value); err == nil {
-			ix = strings.IndexByte(token, ' ')
-			out = append(out, &Token_t{Name: AUTHORIZATION, Value: []byte(token[ix+1:]), Validators: self.validators})
+			if ix = strings.IndexByte(token, ' '); ix > -1 && token[:ix] == "Bearer" {
+				out = append(out, &TokenBearer_t{Name: AUTHORIZATION, Value: []byte(token[ix+1:]), Validators: self.validators})
+			}
 		}
 	}
 	return
 }
 
-type GetAddr_t struct {
+type GetBasic_t struct {
 }
 
-func NewGetAddr() *GetAddr_t {
-	return &GetAddr_t{}
+func NewGetBasic() *GetBasic_t {
+	return &GetBasic_t{}
 }
 
-func (self *GetAddr_t) Addr(r *http.Request) (out string) {
-	if out = r.Header.Get("X-Forwarded-For"); len(out) > 0 {
-		return
+func (self *GetBasic_t) Tokens(r *http.Request) (out []Token) {
+	var ix int
+	var token string
+	for _, token = range r.Header[AUTHORIZATION] {
+		if ix = strings.IndexByte(token, ' '); ix > -1 && token[:ix] == "Basic" {
+			out = append(out, &TokenBasic_t{Name: AUTHORIZATION, Value: []byte(token[ix+1:])})
+		}
 	}
-	if out = r.Header.Get("X-Real-IP"); len(out) > 0 {
-		return
+	if c, err := r.Cookie(AUTHORIZATION); err == nil {
+		if token, err = url.QueryUnescape(c.Value); err == nil {
+			if ix = strings.IndexByte(token, ' '); ix > -1 && token[:ix] == "Basic" {
+				out = append(out, &TokenBasic_t{Name: AUTHORIZATION, Value: []byte(token[ix+1:])})
+			}
+		}
 	}
-	if out, _, _ = net.SplitHostPort(r.RemoteAddr); len(out) > 0 {
-		return
-	}
-	return r.RemoteAddr
+	return
 }
 
 func NewError() *WriteStatus_t {
