@@ -155,3 +155,11 @@ type WriteStatus_t struct {
 func (self *WriteStatus_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(self.Status)
 }
+
+func NewError() *WriteStatus_t {
+	return &WriteStatus_t{Status: http.StatusUnauthorized}
+}
+
+func NewRequired() Required_t {
+	return Required_t{AUTHORIZATION: {}}
+}
