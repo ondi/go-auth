@@ -49,24 +49,6 @@ func WithContext(ctx context.Context, r *http.Request, count int) *http.Request 
 	return r
 }
 
-type BearerBasic_t struct {
-	bearer *Bearer_t
-	basic  *Basic_t
-}
-
-func NewBearerBasic(next_ok http.Handler, next_error http.Handler, get_bearer GetTokens, get_basic GetTokens, except map[string]string, required Required_t, verifier Verifier) (self *BearerBasic_t, err error) {
-	self = &BearerBasic_t{}
-	if self.basic, err = NewBasic(next_ok, next_error, get_basic, except); err != nil {
-		return
-	}
-	self.bearer = NewBearer(next_ok, self.basic, get_bearer, required, verifier)
-	return
-}
-
-func (self *BearerBasic_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	self.bearer.ServeHttp(w, r)
-}
-
 type Bearer_t struct {
 	tokens     GetTokens
 	verifier   Verifier
@@ -115,21 +97,21 @@ func (self BasicVerify_t) Verify(in []byte) (payload []byte, ok bool) {
 
 type Basic_t struct {
 	tokens     GetTokens
-	except     *tst.Tree1_t[BasicVerify_t]
+	passwords  *tst.Tree1_t[BasicVerify_t]
 	next_ok    http.Handler
 	next_error http.Handler
 }
 
-func NewBasic(next_ok http.Handler, next_error http.Handler, tokens GetTokens, except map[string]string) (self *Basic_t, err error) {
+func NewBasic(next_ok http.Handler, next_error http.Handler, tokens GetTokens, passwords map[string]string) (self *Basic_t, err error) {
 	self = &Basic_t{
 		tokens:     tokens,
-		except:     &tst.Tree1_t[BasicVerify_t]{},
+		passwords:  &tst.Tree1_t[BasicVerify_t]{},
 		next_ok:    next_ok,
 		next_error: next_error,
 	}
 
-	for k, v := range except {
-		self.except.Add(k, []byte(v))
+	for k, v := range passwords {
+		self.passwords.Add(k, []byte(v))
 	}
 
 	return
@@ -138,7 +120,7 @@ func NewBasic(next_ok http.Handler, next_error http.Handler, tokens GetTokens, e
 func (self *Basic_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ts := time.Now()
 	for _, token := range self.tokens.Tokens(r) {
-		if verify, ok := self.except.Search(r.URL.Path); ok {
+		if verify, ok := self.passwords.Search(r.URL.Path); ok {
 			if token.VerifyAndValidate(verify, ts) {
 				self.next_ok.ServeHTTP(w, r)
 				return
@@ -156,7 +138,7 @@ func (self *WriteStatus_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(self.Status)
 }
 
-func NewError() *WriteStatus_t {
+func NewUnauthorized() *WriteStatus_t {
 	return &WriteStatus_t{Status: http.StatusUnauthorized}
 }
 
