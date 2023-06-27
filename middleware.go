@@ -120,18 +120,20 @@ func NewBasic(next_ok http.Handler, next_error http.Handler, tokens GetTokens, p
 func (self *Basic_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var count int
 	ts := time.Now()
+	ctx := r.Context()
 	if verify, ok := self.passwords.Search(r.URL.Path); ok {
 		for _, token := range self.tokens.Tokens(r) {
 			if token.VerifyAndValidate(verify, ts) {
 				count++
+				ctx = WithValue(ctx, token.GetName(), token)
 			}
 		}
 		if count > 0 || len(verify) == 0 {
-			self.next_ok.ServeHTTP(w, r)
+			self.next_ok.ServeHTTP(w, WithContext(ctx, r, count))
 			return
 		}
 	}
-	self.next_error.ServeHTTP(w, r)
+	self.next_error.ServeHTTP(w, WithContext(ctx, r, count))
 }
 
 type WriteStatus_t struct {
