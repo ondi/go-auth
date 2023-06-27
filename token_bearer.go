@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
-const AUTHORIZATION = "Authorization"
-
 type BEARER_PAYLOAD = map[string]interface{}
 
 type BEARER_PAYLOAD_GET interface {
@@ -31,15 +29,15 @@ func (self *TokenBearer_t) GetName() string {
 	return self.Name
 }
 
+func (self *TokenBearer_t) GetValue() []byte {
+	return self.Value
+}
+
 func (self *TokenBearer_t) BearerPayload() BEARER_PAYLOAD {
 	return self.Payload
 }
 
-func (self *TokenBearer_t) VerifyAndValidate(path string, in Verifier, ts time.Time) (ok bool) {
-	payload, ok := in.Verify(path, self.Value)
-	if !ok {
-		return
-	}
+func (self *TokenBearer_t) Validate(payload []byte, ts time.Time) (ok bool) {
 	if json.Unmarshal(payload, &self.Payload) != nil {
 		return false
 	}
@@ -75,7 +73,7 @@ func (self *GetBearer_t) Tokens(r *http.Request) (out []Token) {
 		}
 	}
 	for _, v := range r.URL.Query()["bearer"] {
-		out = append(out, &TokenBasic_t{Name: AUTHORIZATION, Value: []byte(v)})
+		out = append(out, &TokenBearer_t{Name: AUTHORIZATION, Value: []byte(v), Validators: self.validators})
 	}
 	return
 }

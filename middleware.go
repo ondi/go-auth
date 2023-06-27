@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+const AUTHORIZATION = "Authorization"
+
 type auth_t string
 type Required_t map[string]struct{}
 
@@ -24,7 +26,8 @@ type Validator[T any] interface {
 
 type Token interface {
 	GetName() string
-	VerifyAndValidate(path string, in Verifier, ts time.Time) bool
+	GetValue() []byte
+	Validate(payload []byte, ts time.Time) bool
 }
 
 type GetTokens interface {
@@ -69,9 +72,11 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	found := Required_t{}
 	for _, token := range self.tokens.Tokens(r) {
-		if token.VerifyAndValidate(r.URL.Path, self.verifier, ts) {
-			ctx = SetValue(ctx, token.GetName(), token)
-			found[token.GetName()] = struct{}{}
+		if payload, ok := self.verifier.Verify(r.URL.Path, token.GetValue()); ok {
+			if token.Validate(payload, ts) {
+				ctx = SetValue(ctx, token.GetName(), token)
+				found[token.GetName()] = struct{}{}
+			}
 		}
 	}
 	if self.verifier.Required(r.URL.Path, found) {
