@@ -19,7 +19,7 @@ func NewExp() *Exp_t {
 	return &Exp_t{Nbf: 60, Exp: -60}
 }
 
-func (self *Exp_t) Validate(ts time.Time, name string, payload PAYLOAD_TYPE) (ok bool) {
+func (self *Exp_t) Validate(ts time.Time, name string, payload BEARER_PAYLOAD) (ok bool) {
 	var test float64
 	// not before
 	temp, ok := payload["nbf"]
