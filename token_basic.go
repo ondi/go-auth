@@ -57,5 +57,8 @@ func (self *GetBasic_t) Tokens(r *http.Request) (out []Token) {
 			}
 		}
 	}
+	for _, v := range r.URL.Query()["basic"] {
+		out = append(out, &TokenBasic_t{Name: AUTHORIZATION, Value: []byte(v)})
+	}
 	return
 }

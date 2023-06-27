@@ -92,7 +92,7 @@ func (self *Bearer_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type BasicVerify_t []byte
 
 func (self BasicVerify_t) Verify(in []byte) (payload []byte, ok bool) {
-	return nil, bytes.Equal(self, in) || len(self) == 0
+	return nil, bytes.Equal(self, in)
 }
 
 type Basic_t struct {
@@ -118,13 +118,17 @@ func NewBasic(next_ok http.Handler, next_error http.Handler, tokens GetTokens, p
 }
 
 func (self *Basic_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var count int
 	ts := time.Now()
-	for _, token := range self.tokens.Tokens(r) {
-		if verify, ok := self.passwords.Search(r.URL.Path); ok {
+	if verify, ok := self.passwords.Search(r.URL.Path); ok {
+		for _, token := range self.tokens.Tokens(r) {
 			if token.VerifyAndValidate(verify, ts) {
-				self.next_ok.ServeHTTP(w, r)
-				return
+				count++
 			}
+		}
+		if count > 0 || len(verify) == 0 {
+			self.next_ok.ServeHTTP(w, r)
+			return
 		}
 	}
 	self.next_error.ServeHTTP(w, r)
