@@ -89,7 +89,7 @@ func (self *WriteStatus_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(self.Status)
 }
 
-func NewUnauthorized() *WriteStatus_t {
+func New401() *WriteStatus_t {
 	return &WriteStatus_t{Status: http.StatusUnauthorized}
 }
 
