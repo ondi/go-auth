@@ -5,9 +5,9 @@
 package auth
 
 import (
-	"bytes"
 	"context"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/ondi/go-tst"
@@ -89,29 +89,36 @@ func (self *Bearer_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type BasicVerify_t []byte
+type BasicVerify_t struct {
+	re     *regexp.Regexp
+	length int
+}
 
-func (self BasicVerify_t) Verify(in []byte) (payload []byte, ok bool) {
-	return nil, bytes.Equal(self, in)
+func (self *BasicVerify_t) Verify(in []byte) ([]byte, bool) {
+	return in, self.re.Match(in)
 }
 
 type Basic_t struct {
 	tokens     GetTokens
-	passwords  *tst.Tree1_t[BasicVerify_t]
+	passwords  *tst.Tree1_t[*BasicVerify_t]
 	next_ok    http.Handler
 	next_error http.Handler
 }
 
-func NewBasic(next_ok http.Handler, next_error http.Handler, tokens GetTokens, passwords map[string]string) (self *Basic_t) {
+func NewBasic(next_ok http.Handler, next_error http.Handler, tokens GetTokens, passwords map[string]string) (self *Basic_t, err error) {
 	self = &Basic_t{
 		tokens:     tokens,
-		passwords:  &tst.Tree1_t[BasicVerify_t]{},
+		passwords:  &tst.Tree1_t[*BasicVerify_t]{},
 		next_ok:    next_ok,
 		next_error: next_error,
 	}
 
+	var re *regexp.Regexp
 	for k, v := range passwords {
-		self.passwords.Add(k, []byte(v))
+		if re, err = regexp.Compile(v); err != nil {
+			return
+		}
+		self.passwords.Add(k, &BasicVerify_t{re: re, length: len(v)})
 	}
 
 	return
@@ -128,7 +135,7 @@ func (self *Basic_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				ctx = WithValue(ctx, token.GetName(), token)
 			}
 		}
-		if count > 0 || len(verify) == 0 {
+		if count > 0 || verify.length == 0 {
 			self.next_ok.ServeHTTP(w, WithContext(ctx, r, count))
 			return
 		}
