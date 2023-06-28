@@ -35,8 +35,8 @@ func (self *TokenBearer_t) BearerPayload() BEARER_PAYLOAD {
 	return self.Payload
 }
 
-func (self *TokenBearer_t) VerifyAndValidate(in Verifier, ts time.Time) (ok bool) {
-	payload, ok := in.Verify(self.Value)
+func (self *TokenBearer_t) VerifyAndValidate(path string, in Verifier, ts time.Time) (ok bool) {
+	payload, ok := in.Verify(path, self.Value)
 	if !ok {
 		return
 	}

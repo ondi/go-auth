@@ -30,8 +30,8 @@ func (self *TokenBasic_t) BasicPayload() BASIC_PAYLOAD {
 	return self.Value
 }
 
-func (self *TokenBasic_t) VerifyAndValidate(in Verifier, ts time.Time) (ok bool) {
-	_, ok = in.Verify(self.Value)
+func (self *TokenBasic_t) VerifyAndValidate(path string, in Verifier, ts time.Time) (ok bool) {
+	_, ok = in.Verify(path, self.Value)
 	return
 }
 
