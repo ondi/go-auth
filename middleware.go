@@ -34,7 +34,6 @@ type GetTokens interface {
 	Tokens(r *http.Request) []Token
 }
 
-// cast to PAYLOAD_TYPE_GET
 func GetValue(ctx context.Context, name string) interface{} {
 	return ctx.Value(auth_t(name))
 }

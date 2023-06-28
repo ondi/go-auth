@@ -17,7 +17,7 @@ type Signer interface {
 }
 
 type Sign_t struct {
-	jwt.Signer
+	signer jwt.Signer
 }
 
 func NewSign(file string) (out *Sign_t, err error) {
@@ -36,12 +36,12 @@ func NewSign(file string) (out *Sign_t, err error) {
 	if err != nil {
 		return
 	}
-	out = &Sign_t{Signer: res}
+	out = &Sign_t{signer: res}
 	return
 }
 
 func (self *Sign_t) Sign(bits int64, payload []byte, out *bytes.Buffer) error {
-	return jwt.Sign(self.Signer, bits, payload, out)
+	return jwt.Sign(self.signer, bits, payload, out)
 }
 
 type NoSing_t struct{}
