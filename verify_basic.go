@@ -10,18 +10,20 @@ import (
 	"github.com/ondi/go-tst"
 )
 
-type verify_basic_regexp_t struct {
+type regexp_length_t struct {
 	re     *regexp.Regexp
 	length int
 }
 
 type VerifyBasic_t struct {
-	passwords *tst.Tree1_t[verify_basic_regexp_t]
+	passwords *tst.Tree1_t[regexp_length_t]
+	required  Required_t
 }
 
-func NewVerifyBasic(passwords map[string]string) (self *VerifyBasic_t, err error) {
+func NewVerifyBasic(required Required_t, passwords map[string]string) (self *VerifyBasic_t, err error) {
 	self = &VerifyBasic_t{
-		passwords: &tst.Tree1_t[verify_basic_regexp_t]{},
+		passwords: &tst.Tree1_t[regexp_length_t]{},
+		required:  required,
 	}
 
 	var re *regexp.Regexp
@@ -29,7 +31,7 @@ func NewVerifyBasic(passwords map[string]string) (self *VerifyBasic_t, err error
 		if re, err = regexp.Compile(v); err != nil {
 			return
 		}
-		self.passwords.Add(k, verify_basic_regexp_t{re: re, length: len(v)})
+		self.passwords.Add(k, regexp_length_t{re: re, length: len(v)})
 	}
 	return
 }
@@ -43,7 +45,13 @@ func (self *VerifyBasic_t) Verify(path string, in []byte) (payload []byte, ok bo
 }
 
 func (self *VerifyBasic_t) Required(path string, in Required_t) (ok bool) {
-	if len(in) > 0 {
+	var count int
+	for k := range self.required {
+		if _, ok = in[k]; ok {
+			count++
+		}
+	}
+	if count == len(self.required) {
 		return true
 	}
 	re, ok := self.passwords.Search(path)
