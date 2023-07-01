@@ -13,11 +13,11 @@ import (
 const AUTHORIZATION = "Authorization"
 
 type auth_t string
-type Required_t map[string]struct{}
+type List_t map[string]struct{}
 
 type Verifier interface {
 	Verify(path string, in []byte) (payload []byte, ok bool)
-	Required(path string, in Required_t) (ok bool)
+	Required(path string, found List_t) (ok bool)
 }
 
 type Validator[T any] interface {
@@ -69,7 +69,7 @@ func NewAuth(next_ok http.Handler, next_error http.Handler, tokens GetTokens, ve
 func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ts := time.Now()
 	ctx := r.Context()
-	found := Required_t{}
+	found := List_t{}
 	for _, token := range self.tokens.Tokens(r) {
 		if payload, ok := self.verifier.Verify(r.URL.Path, token.GetValue()); ok {
 			if token.Validate(payload, ts) {
@@ -97,6 +97,6 @@ func New401() *WriteStatus_t {
 	return &WriteStatus_t{Status: http.StatusUnauthorized}
 }
 
-func NewRequired() Required_t {
-	return Required_t{AUTHORIZATION: {}}
+func NewRequired() List_t {
+	return List_t{AUTHORIZATION: {}}
 }

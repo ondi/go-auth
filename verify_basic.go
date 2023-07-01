@@ -17,10 +17,10 @@ type regexp_length_t struct {
 
 type VerifyBasic_t struct {
 	passwords *tst.Tree1_t[regexp_length_t]
-	required  Required_t
+	required  List_t
 }
 
-func NewVerifyBasic(required Required_t, passwords map[string]string) (self *VerifyBasic_t, err error) {
+func NewVerifyBasic(required List_t, passwords map[string]string) (self *VerifyBasic_t, err error) {
 	self = &VerifyBasic_t{
 		passwords: &tst.Tree1_t[regexp_length_t]{},
 		required:  required,
@@ -44,19 +44,19 @@ func (self *VerifyBasic_t) Verify(path string, in []byte) (payload []byte, ok bo
 	return
 }
 
-func (self *VerifyBasic_t) Required(path string, in Required_t) (ok bool) {
+func (self *VerifyBasic_t) Required(path string, found List_t) (ok bool) {
+	re, ok := self.passwords.Search(path)
+	if ok && re.length == 0 {
+		return true
+	}
 	var count int
 	for k := range self.required {
-		if _, ok = in[k]; ok {
+		if _, ok = found[k]; ok {
 			count++
 		}
 	}
-	if count == len(self.required) {
-		return true
+	if len(self.required) > 0 {
+		return len(self.required) == count
 	}
-	re, ok := self.passwords.Search(path)
-	if ok {
-		return re.length == 0
-	}
-	return
+	return len(found) > 0
 }

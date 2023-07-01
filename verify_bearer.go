@@ -14,10 +14,10 @@ import (
 
 type VerifyBearer_t struct {
 	verify   []jwt.Verifier
-	required Required_t
+	required List_t
 }
 
-func NewVerifyBearerGlob(required Required_t, pattern string) (res *VerifyBearer_t, err error) {
+func NewVerifyBearerGlob(required List_t, pattern string) (res *VerifyBearer_t, err error) {
 	matched, err := filepath.Glob(pattern)
 	if err != nil {
 		return
@@ -25,7 +25,7 @@ func NewVerifyBearerGlob(required Required_t, pattern string) (res *VerifyBearer
 	return NewVerifyBearer(required, matched...)
 }
 
-func NewVerifyBearer(required Required_t, files ...string) (res *VerifyBearer_t, err error) {
+func NewVerifyBearer(required List_t, files ...string) (res *VerifyBearer_t, err error) {
 	res = &VerifyBearer_t{
 		required: required,
 	}
@@ -85,12 +85,15 @@ func (self *VerifyBearer_t) Verify(path string, in []byte) (payload []byte, ok b
 	return
 }
 
-func (self *VerifyBearer_t) Required(path string, in Required_t) (ok bool) {
+func (self *VerifyBearer_t) Required(path string, found List_t) (ok bool) {
 	var count int
 	for k := range self.required {
-		if _, ok = in[k]; ok {
+		if _, ok = found[k]; ok {
 			count++
 		}
 	}
-	return count == len(self.required)
+	if len(self.required) > 0 {
+		return len(self.required) == count
+	}
+	return len(found) > 0
 }
