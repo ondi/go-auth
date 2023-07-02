@@ -86,14 +86,11 @@ func (self *VerifyBearer_t) Verify(path string, in []byte) (payload []byte, ok b
 }
 
 func (self *VerifyBearer_t) Required(path string, found List_t) (ok bool) {
-	var count int
-	for k := range self.required {
-		if _, ok = found[k]; ok {
-			count++
+	if len(found) > 0 {
+		if len(self.required) > 0 {
+			return len(self.required) == self.required.Intersect(found)
 		}
+		return true
 	}
-	if len(self.required) > 0 {
-		return len(self.required) == count
-	}
-	return len(found) > 0
+	return
 }

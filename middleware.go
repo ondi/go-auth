@@ -15,6 +15,12 @@ const AUTHORIZATION = "Authorization"
 type auth_t string
 type List_t map[string]struct{}
 
+type Token interface {
+	GetName() string
+	GetValue() []byte
+	Validate(payload []byte, ts time.Time) bool
+}
+
 type Verifier interface {
 	Verify(path string, in []byte) (payload []byte, ok bool)
 	Required(path string, found List_t) (ok bool)
@@ -22,12 +28,6 @@ type Verifier interface {
 
 type Validator[T any] interface {
 	Validate(ts time.Time, name string, in T) bool
-}
-
-type Token interface {
-	GetName() string
-	GetValue() []byte
-	Validate(payload []byte, ts time.Time) bool
 }
 
 type GetTokens interface {
@@ -47,6 +47,16 @@ func WithContext(ctx context.Context, r *http.Request, count int) *http.Request 
 		return r.WithContext(ctx)
 	}
 	return r
+}
+
+func (self List_t) Intersect(in List_t) (count int) {
+	var ok bool
+	for k := range self {
+		if _, ok = in[k]; ok {
+			count++
+		}
+	}
+	return
 }
 
 type Auth_t struct {
