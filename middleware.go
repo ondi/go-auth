@@ -43,9 +43,8 @@ func CtxGet(ctx context.Context) (res []Token) {
 	return
 }
 
-func ctx_append(ctx context.Context, value []Token) context.Context {
-	temp, _ := ctx.Value(&auth_key).([]Token)
-	return context.WithValue(ctx, &auth_key, append(temp, value...))
+func ctx_set(ctx context.Context, value []Token) context.Context {
+	return context.WithValue(ctx, &auth_key, value)
 }
 
 type Auth_t struct {
@@ -76,9 +75,8 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	ctx = ctx_append(ctx, found)
 	if self.parser.Approve(r.URL.Path, found) {
-		self.next_ok.ServeHTTP(w, r.WithContext(ctx))
+		self.next_ok.ServeHTTP(w, r.WithContext(ctx_set(ctx, found)))
 	} else {
 		self.next_error.ServeHTTP(w, r.WithContext(ctx))
 	}
