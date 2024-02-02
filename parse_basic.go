@@ -44,7 +44,7 @@ func (self *ParseBasic_t) Parse(path string, in []byte) (payload []byte, ok bool
 }
 
 func (self *ParseBasic_t) Approve(path string, found []Token) (ok bool) {
-	if len(found) > self.required {
+	if len(found) >= self.required {
 		return true
 	}
 	re, ok := self.passwords.Search(path)
