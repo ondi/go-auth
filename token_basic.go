@@ -48,20 +48,20 @@ func NewGetBasic() *GetBasic_t {
 func (self *GetBasic_t) Tokens(r *http.Request) (out []Token) {
 	var ix int
 	var token string
-	for _, token = range r.Header[AUTHORIZATION] {
-		if ix = strings.IndexByte(token, ' '); ix > -1 && token[:ix] == "Basic" {
-			out = append(out, &TokenBasic_t{Name: AUTHORIZATION, Value: []byte(token[ix+1:])})
+	for _, token = range r.Header[HEADER] {
+		if ix = strings.IndexByte(token, ' '); ix > -1 && strings.EqualFold(token[:ix], BASIC) {
+			out = append(out, &TokenBasic_t{Name: BASIC, Value: []byte(token[ix+1:])})
 		}
 	}
-	if c, err := r.Cookie(AUTHORIZATION); err == nil {
+	if c, err := r.Cookie(HEADER); err == nil {
 		if token, err = url.QueryUnescape(c.Value); err == nil {
-			if ix = strings.IndexByte(token, ' '); ix > -1 && token[:ix] == "Basic" {
-				out = append(out, &TokenBasic_t{Name: AUTHORIZATION, Value: []byte(token[ix+1:])})
+			if ix = strings.IndexByte(token, ' '); ix > -1 && strings.EqualFold(token[:ix], BASIC) {
+				out = append(out, &TokenBasic_t{Name: BASIC, Value: []byte(token[ix+1:])})
 			}
 		}
 	}
 	for _, v := range r.URL.Query()["basic"] {
-		out = append(out, &TokenBasic_t{Name: AUTHORIZATION, Value: []byte(v)})
+		out = append(out, &TokenBasic_t{Name: BASIC, Value: []byte(v)})
 	}
 	return
 }

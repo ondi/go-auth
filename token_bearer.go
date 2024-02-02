@@ -60,20 +60,20 @@ func NewGetBearer(validators ...Validator[BEARER_PAYLOAD]) *GetBearer_t {
 func (self *GetBearer_t) Tokens(r *http.Request) (out []Token) {
 	var ix int
 	var token string
-	for _, token = range r.Header[AUTHORIZATION] {
-		if ix = strings.IndexByte(token, ' '); ix > -1 && token[:ix] == "Bearer" {
-			out = append(out, &TokenBearer_t{Name: AUTHORIZATION, Value: []byte(token[ix+1:]), Validators: self.validators})
+	for _, token = range r.Header[HEADER] {
+		if ix = strings.IndexByte(token, ' '); ix > -1 && strings.EqualFold(token[:ix], BEARER) {
+			out = append(out, &TokenBearer_t{Name: BEARER, Value: []byte(token[ix+1:]), Validators: self.validators})
 		}
 	}
-	if c, err := r.Cookie(AUTHORIZATION); err == nil {
+	if c, err := r.Cookie(HEADER); err == nil {
 		if token, err = url.QueryUnescape(c.Value); err == nil {
-			if ix = strings.IndexByte(token, ' '); ix > -1 && token[:ix] == "Bearer" {
-				out = append(out, &TokenBearer_t{Name: AUTHORIZATION, Value: []byte(token[ix+1:]), Validators: self.validators})
+			if ix = strings.IndexByte(token, ' '); ix > -1 && strings.EqualFold(token[:ix], BEARER) {
+				out = append(out, &TokenBearer_t{Name: BEARER, Value: []byte(token[ix+1:]), Validators: self.validators})
 			}
 		}
 	}
 	for _, v := range r.URL.Query()["bearer"] {
-		out = append(out, &TokenBearer_t{Name: AUTHORIZATION, Value: []byte(v), Validators: self.validators})
+		out = append(out, &TokenBearer_t{Name: BEARER, Value: []byte(v), Validators: self.validators})
 	}
 	return
 }

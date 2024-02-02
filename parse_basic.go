@@ -10,13 +10,13 @@ import (
 	"github.com/ondi/go-tst"
 )
 
-type VerifyBasic_t struct {
+type ParseBasic_t struct {
 	passwords *tst.Tree1_t[*regexp.Regexp]
-	required  List_t
+	required  int
 }
 
-func NewVerifyBasic(required List_t, passwords map[string]string) (self *VerifyBasic_t, err error) {
-	self = &VerifyBasic_t{
+func NewParseBasic(required int, passwords map[string]string) (self *ParseBasic_t, err error) {
+	self = &ParseBasic_t{
 		passwords: &tst.Tree1_t[*regexp.Regexp]{},
 		required:  required,
 	}
@@ -35,7 +35,7 @@ func NewVerifyBasic(required List_t, passwords map[string]string) (self *VerifyB
 	return
 }
 
-func (self *VerifyBasic_t) Verify(path string, in []byte) (payload []byte, ok bool) {
+func (self *ParseBasic_t) Parse(path string, in []byte) (payload []byte, ok bool) {
 	re, ok := self.passwords.Search(path)
 	if ok && re != nil {
 		return in, re.Match(in)
@@ -43,11 +43,8 @@ func (self *VerifyBasic_t) Verify(path string, in []byte) (payload []byte, ok bo
 	return
 }
 
-func (self *VerifyBasic_t) Required(path string, found List_t) (ok bool) {
-	if len(found) > 0 {
-		if len(self.required) > 0 {
-			return len(self.required) == self.required.Intersect(found)
-		}
+func (self *ParseBasic_t) Approve(path string, found []Token) (ok bool) {
+	if len(found) > self.required {
 		return true
 	}
 	re, ok := self.passwords.Search(path)

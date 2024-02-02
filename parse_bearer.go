@@ -5,34 +5,34 @@
 package auth
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/ondi/go-jwt"
 )
 
-type VerifyBearer_t struct {
+type ParseBearer_t struct {
 	verify   []jwt.Verifier
-	required List_t
+	required int
 }
 
-func NewVerifyBearerGlob(required List_t, pattern string) (res *VerifyBearer_t, err error) {
+func NewParseBearerGlob(required int, pattern string) (res *ParseBearer_t, err error) {
 	matched, err := filepath.Glob(pattern)
 	if err != nil {
 		return
 	}
-	return NewVerifyBearer(required, matched...)
+	return NewParseBearer(required, matched...)
 }
 
-func NewVerifyBearer(required List_t, files ...string) (res *VerifyBearer_t, err error) {
-	res = &VerifyBearer_t{
+func NewParseBearer(required int, files ...string) (res *ParseBearer_t, err error) {
+	res = &ParseBearer_t{
 		required: required,
 	}
 	var buf []byte
 	var verify jwt.Verifier
 	for _, file := range files {
-		if buf, err = ioutil.ReadFile(file); err != nil {
+		if buf, err = os.ReadFile(file); err != nil {
 			return
 		}
 		if strings.Contains(file, "hmac") {
@@ -58,18 +58,18 @@ func NewVerifyBearer(required List_t, files ...string) (res *VerifyBearer_t, err
 	return
 }
 
-func (self *VerifyBearer_t) Len() int {
+func (self *ParseBearer_t) Len() int {
 	return len(self.verify)
 }
 
-func (self *VerifyBearer_t) Names() (res []string) {
+func (self *ParseBearer_t) Names() (res []string) {
 	for _, v := range self.verify {
 		res = append(res, v.Name())
 	}
 	return
 }
 
-func (self *VerifyBearer_t) Verify(path string, in []byte) (payload []byte, ok bool) {
+func (self *ParseBearer_t) Parse(path string, in []byte) (payload []byte, ok bool) {
 	alg, bits, _, payload, signature, err := jwt.Parse(in)
 	if err != nil {
 		return
@@ -85,11 +85,8 @@ func (self *VerifyBearer_t) Verify(path string, in []byte) (payload []byte, ok b
 	return
 }
 
-func (self *VerifyBearer_t) Required(path string, found List_t) (ok bool) {
-	if len(found) > 0 {
-		if len(self.required) > 0 {
-			return len(self.required) == self.required.Intersect(found)
-		}
+func (self *ParseBearer_t) Approve(path string, found []Token) (ok bool) {
+	if len(found) >= self.required {
 		return true
 	}
 	return

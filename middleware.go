@@ -10,10 +10,14 @@ import (
 	"time"
 )
 
-const AUTHORIZATION = "Authorization"
+const (
+	BASIC  = "Basic"
+	BEARER = "Bearer"
+	HEADER = "Authorization"
+)
 
-type auth_t string
-type List_t map[string]struct{}
+// &auth_key used for context.Value
+var auth_key = 1
 
 type Token interface {
 	GetName() string
@@ -21,9 +25,9 @@ type Token interface {
 	Validate(payload []byte, ts time.Time) bool
 }
 
-type Verifier interface {
-	Verify(path string, in []byte) (payload []byte, ok bool)
-	Required(path string, found List_t) (ok bool)
+type Parser interface {
+	Parse(path string, in []byte) (payload []byte, ok bool)
+	Approve(path string, found []Token) (ok bool)
 }
 
 type Validator[T any] interface {
@@ -34,42 +38,27 @@ type GetTokens interface {
 	Tokens(r *http.Request) []Token
 }
 
-func GetValue(ctx context.Context, name string) interface{} {
-	return ctx.Value(auth_t(name))
-}
-
-func SetValue(ctx context.Context, name string, value interface{}) context.Context {
-	return context.WithValue(ctx, auth_t(name), value)
-}
-
-func WithContext(ctx context.Context, r *http.Request, count int) *http.Request {
-	if count > 0 {
-		return r.WithContext(ctx)
-	}
-	return r
-}
-
-func (self List_t) Intersect(in List_t) (count int) {
-	var ok bool
-	for k := range self {
-		if _, ok = in[k]; ok {
-			count++
-		}
-	}
+func CtxGet(ctx context.Context) (res []Token) {
+	res, _ = ctx.Value(&auth_key).([]Token)
 	return
+}
+
+func ctx_append(ctx context.Context, value []Token) context.Context {
+	temp, _ := ctx.Value(&auth_key).([]Token)
+	return context.WithValue(ctx, &auth_key, append(temp, value...))
 }
 
 type Auth_t struct {
 	tokens     GetTokens
-	verifier   Verifier
+	parser     Parser
 	next_ok    http.Handler
 	next_error http.Handler
 }
 
-func NewAuth(next_ok http.Handler, next_error http.Handler, tokens GetTokens, verifier Verifier) (self *Auth_t) {
+func NewAuth(next_ok http.Handler, next_error http.Handler, tokens GetTokens, parser Parser) (self *Auth_t) {
 	self = &Auth_t{
 		tokens:     tokens,
-		verifier:   verifier,
+		parser:     parser,
 		next_ok:    next_ok,
 		next_error: next_error,
 	}
@@ -79,19 +68,19 @@ func NewAuth(next_ok http.Handler, next_error http.Handler, tokens GetTokens, ve
 func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ts := time.Now()
 	ctx := r.Context()
-	found := List_t{}
+	var found []Token
 	for _, token := range self.tokens.Tokens(r) {
-		if payload, ok := self.verifier.Verify(r.URL.Path, token.GetValue()); ok {
+		if payload, ok := self.parser.Parse(r.URL.Path, token.GetValue()); ok {
 			if token.Validate(payload, ts) {
-				ctx = SetValue(ctx, token.GetName(), token)
-				found[token.GetName()] = struct{}{}
+				found = append(found, token)
 			}
 		}
 	}
-	if self.verifier.Required(r.URL.Path, found) {
-		self.next_ok.ServeHTTP(w, WithContext(ctx, r, len(found)))
+	ctx = ctx_append(ctx, found)
+	if self.parser.Approve(r.URL.Path, found) {
+		self.next_ok.ServeHTTP(w, r.WithContext(ctx))
 	} else {
-		self.next_error.ServeHTTP(w, WithContext(ctx, r, len(found)))
+		self.next_error.ServeHTTP(w, r.WithContext(ctx))
 	}
 }
 
@@ -105,8 +94,4 @@ func (self *WriteStatus_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func New401() *WriteStatus_t {
 	return &WriteStatus_t{Status: http.StatusUnauthorized}
-}
-
-func NewRequired() List_t {
-	return List_t{AUTHORIZATION: {}}
 }
