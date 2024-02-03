@@ -11,15 +11,20 @@ import (
 	"time"
 )
 
-type BASIC_PAYLOAD = []byte
-
-type BASIC_PAYLOAD_GET interface {
-	BasicPayload() BASIC_PAYLOAD
-}
-
 type TokenBasic_t struct {
 	Name  string
 	Value []byte
+}
+
+func NewTokenBasic() *TokenBasic_t {
+	return &TokenBasic_t{}
+}
+
+func (self *TokenBasic_t) Create(name string, value []byte) Token {
+	return &TokenBasic_t{
+		Name:  name,
+		Value: value,
+	}
 }
 
 func (self *TokenBasic_t) GetName() string {
@@ -30,38 +35,35 @@ func (self *TokenBasic_t) GetValue() []byte {
 	return self.Value
 }
 
-func (self *TokenBasic_t) BasicPayload() BASIC_PAYLOAD {
+func (self *TokenBasic_t) GetBody() any {
 	return self.Value
 }
 
-func (self *TokenBasic_t) Validate(payload []byte, ts time.Time) (ok bool) {
+func (self *TokenBasic_t) Parse(payload []byte) error {
+	return nil
+}
+
+func (self *TokenBasic_t) Validate(ts time.Time) (ok bool) {
 	return true
 }
 
-type GetBasic_t struct {
-}
-
-func NewGetBasic() *GetBasic_t {
-	return &GetBasic_t{}
-}
-
-func (self *GetBasic_t) Tokens(r *http.Request) (out []Token) {
+func (self *TokenBasic_t) Find(r *http.Request, out *[]Token) {
 	var ix int
 	var token string
 	for _, token = range r.Header[HEADER] {
 		if ix = strings.IndexByte(token, ' '); ix > -1 && strings.EqualFold(token[:ix], BASIC) {
-			out = append(out, &TokenBasic_t{Name: BASIC, Value: []byte(token[ix+1:])})
+			*out = append(*out, self.Create(BASIC, []byte(token[ix+1:])))
 		}
 	}
 	if c, err := r.Cookie(HEADER); err == nil {
 		if token, err = url.QueryUnescape(c.Value); err == nil {
 			if ix = strings.IndexByte(token, ' '); ix > -1 && strings.EqualFold(token[:ix], BASIC) {
-				out = append(out, &TokenBasic_t{Name: BASIC, Value: []byte(token[ix+1:])})
+				*out = append(*out, self.Create(BASIC, []byte(token[ix+1:])))
 			}
 		}
 	}
 	for _, v := range r.URL.Query()["basic"] {
-		out = append(out, &TokenBasic_t{Name: BASIC, Value: []byte(v)})
+		*out = append(*out, self.Create(BASIC, []byte(v)))
 	}
 	return
 }

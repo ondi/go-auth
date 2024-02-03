@@ -6,7 +6,7 @@ package auth
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/ondi/go-jwt"
@@ -21,7 +21,7 @@ type Sign_t struct {
 }
 
 func NewSign(file string) (out *Sign_t, err error) {
-	buf, err := ioutil.ReadFile(file)
+	buf, err := os.ReadFile(file)
 	if err != nil {
 		return
 	}

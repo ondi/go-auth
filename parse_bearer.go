@@ -22,10 +22,10 @@ func NewParseBearerGlob(required int, pattern string) (res *ParseBearer_t, err e
 	if err != nil {
 		return
 	}
-	return NewParseBearer(required, matched...)
+	return NewParseBearer(required, matched)
 }
 
-func NewParseBearer(required int, files ...string) (res *ParseBearer_t, err error) {
+func NewParseBearer(required int, files []string) (res *ParseBearer_t, err error) {
 	res = &ParseBearer_t{
 		required: required,
 	}
@@ -75,7 +75,7 @@ func (self *ParseBearer_t) Parse(path string, in []byte) (payload []byte, ok boo
 		return
 	}
 	for _, v := range self.verify {
-		if !strings.HasPrefix(alg, v.Name()) {
+		if strings.HasPrefix(alg, v.Name()) == false {
 			continue
 		}
 		if ok = jwt.Verify(v, bits, signature, in); ok {
