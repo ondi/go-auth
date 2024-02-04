@@ -15,7 +15,7 @@ import (
 type BEARER_PAYLOAD = map[string]interface{}
 
 type Validator interface {
-	Validate(ts time.Time, name string, in BEARER_PAYLOAD) bool
+	Validate(ts time.Time, token *TokenBearer_t) bool
 }
 
 type TokenBearer_t struct {
@@ -57,7 +57,7 @@ func (self *TokenBearer_t) Parse(payload []byte) error {
 
 func (self *TokenBearer_t) Validate(ts time.Time) (ok bool) {
 	for _, v := range self.Validators {
-		if v.Validate(ts, self.Name, self.Body) == false {
+		if v.Validate(ts, self) == false {
 			return false
 		}
 	}
@@ -94,10 +94,10 @@ func NewExp() *Exp_t {
 	return &Exp_t{Nbf: 60, Exp: -60}
 }
 
-func (self *Exp_t) Validate(ts time.Time, name string, payload BEARER_PAYLOAD) (ok bool) {
+func (self *Exp_t) Validate(ts time.Time, token *TokenBearer_t) (ok bool) {
 	var test float64
 	// not before
-	temp, ok := payload["nbf"]
+	temp, ok := token.Body["nbf"]
 	if ok {
 		if test, ok = temp.(float64); !ok {
 			return
@@ -107,7 +107,7 @@ func (self *Exp_t) Validate(ts time.Time, name string, payload BEARER_PAYLOAD) (
 		}
 	}
 	// expire
-	temp, ok = payload["exp"]
+	temp, ok = token.Body["exp"]
 	if ok {
 		if test, ok = temp.(float64); !ok {
 			return
