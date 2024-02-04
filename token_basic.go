@@ -47,23 +47,23 @@ func (self *TokenBasic_t) Validate(ts time.Time) (ok bool) {
 	return true
 }
 
-func (self *TokenBasic_t) Find(r *http.Request, out *[]Token) {
+func (self *TokenBasic_t) Find(r *http.Request) (out []Token) {
 	var ix int
 	var token string
 	for _, token = range r.Header[HEADER] {
 		if ix = strings.IndexByte(token, ' '); ix > -1 && strings.EqualFold(token[:ix], BASIC) {
-			*out = append(*out, self.Create(BASIC, []byte(token[ix+1:])))
+			out = append(out, self.Create(BASIC, []byte(token[ix+1:])))
 		}
 	}
 	if c, err := r.Cookie(HEADER); err == nil {
 		if token, err = url.QueryUnescape(c.Value); err == nil {
 			if ix = strings.IndexByte(token, ' '); ix > -1 && strings.EqualFold(token[:ix], BASIC) {
-				*out = append(*out, self.Create(BASIC, []byte(token[ix+1:])))
+				out = append(out, self.Create(BASIC, []byte(token[ix+1:])))
 			}
 		}
 	}
 	for _, v := range r.URL.Query()["basic"] {
-		*out = append(*out, self.Create(BASIC, []byte(v)))
+		out = append(out, self.Create(BASIC, []byte(v)))
 	}
 	return
 }

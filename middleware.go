@@ -29,7 +29,7 @@ type Token interface {
 
 type NewToken interface {
 	Create(name string, value []byte) Token
-	Find(r *http.Request, out *[]Token)
+	Find(r *http.Request) []Token
 }
 
 type Parser interface {
@@ -66,14 +66,13 @@ func NewAuth(next_ok http.Handler, next_error http.Handler, parser Parser, token
 func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ts := time.Now()
 	ctx := r.Context()
-	var in, out []Token
-	for _, v := range self.token {
-		v.Find(r, &in)
-	}
-	for _, token := range in {
-		if payload, ok := self.parser.Parse(r.URL.Path, token.GetValue()); ok {
-			if token.Parse(payload) == nil && token.Validate(ts) {
-				out = append(out, token)
+	var out []Token
+	for _, v1 := range self.token {
+		for _, v2 := range v1.Find(r) {
+			if payload, ok := self.parser.Parse(r.URL.Path, v2.GetValue()); ok {
+				if v2.Parse(payload) == nil && v2.Validate(ts) {
+					out = append(out, v2)
+				}
 			}
 		}
 	}
