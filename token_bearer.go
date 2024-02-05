@@ -64,7 +64,15 @@ func (self *TokenBearer_t) Validate(ts time.Time) (ok bool) {
 	return true
 }
 
-func (self *TokenBearer_t) Find(r *http.Request) (out []Token) {
+type FindBearer_t struct {
+	*TokenBearer_t
+}
+
+func NewFindBearer(bearer *TokenBearer_t) *FindBearer_t {
+	return &FindBearer_t{TokenBearer_t: bearer}
+}
+
+func (self *FindBearer_t) Find(r *http.Request) (out []Token) {
 	var ix int
 	var token string
 	for _, token = range r.Header[HEADER] {

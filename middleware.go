@@ -27,8 +27,12 @@ type Token interface {
 	Validate(ts time.Time) bool
 }
 
-type NewToken interface {
+type CreateToken interface {
 	Create(name string, value []byte) Token
+}
+
+type FindToken interface {
+	CreateToken
 	Find(r *http.Request) []Token
 }
 
@@ -47,13 +51,13 @@ func ctx_set(ctx context.Context, value []Token) context.Context {
 }
 
 type Auth_t struct {
-	token      []NewToken
+	token      []FindToken
 	parser     Parser
 	next_ok    http.Handler
 	next_error http.Handler
 }
 
-func NewAuth(next_ok http.Handler, next_error http.Handler, parser Parser, token ...NewToken) (self *Auth_t) {
+func NewAuth(next_ok http.Handler, next_error http.Handler, parser Parser, token ...FindToken) (self *Auth_t) {
 	self = &Auth_t{
 		token:      token,
 		parser:     parser,

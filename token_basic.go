@@ -47,7 +47,15 @@ func (self *TokenBasic_t) Validate(ts time.Time) (ok bool) {
 	return true
 }
 
-func (self *TokenBasic_t) Find(r *http.Request) (out []Token) {
+type FindBasic_t struct {
+	*TokenBasic_t
+}
+
+func NewFindBasic(basic *TokenBasic_t) *FindBasic_t {
+	return &FindBasic_t{TokenBasic_t: basic}
+}
+
+func (self *FindBasic_t) Find(r *http.Request) (out []Token) {
 	var ix int
 	var token string
 	for _, token = range r.Header[HEADER] {

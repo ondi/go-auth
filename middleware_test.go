@@ -12,9 +12,10 @@ import (
 
 func Test001(t *testing.T) {
 	bearer := NewTokenBearer(NewExp())
+	find := NewFindBearer(bearer)
 	parser, err := NewParseBearer(1, nil)
 	assert.Assert(t, err == nil)
-	auth := NewAuth(nil, nil, parser, bearer)
+	auth := NewAuth(nil, nil, parser, find)
 	_ = auth
 	// auth.ServeHTTP(nil, nil)
 }
