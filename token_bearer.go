@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
-type BEARER_PAYLOAD = map[string]interface{}
-
 type Validator interface {
 	Validate(ts time.Time, token *TokenBearer_t) bool
 }
@@ -21,13 +19,13 @@ type Validator interface {
 type TokenBearer_t struct {
 	Name       string
 	Value      []byte
-	Body       BEARER_PAYLOAD
-	Validators []Validator
+	Body       map[string]interface{}
+	validators []Validator
 }
 
-func NewTokenBearer(validator ...Validator) *TokenBearer_t {
+func NewTokenBearer(validators ...Validator) *TokenBearer_t {
 	return &TokenBearer_t{
-		Validators: validator,
+		validators: validators,
 	}
 }
 
@@ -35,7 +33,7 @@ func (self *TokenBearer_t) Create(name string, value []byte) Token {
 	return &TokenBearer_t{
 		Name:       name,
 		Value:      value,
-		Validators: self.Validators,
+		validators: self.validators,
 	}
 }
 
@@ -52,7 +50,7 @@ func (self *TokenBearer_t) Parse(payload []byte) error {
 }
 
 func (self *TokenBearer_t) Validate(ts time.Time) (ok bool) {
-	for _, v := range self.Validators {
+	for _, v := range self.validators {
 		if v.Validate(ts, self) == false {
 			return false
 		}
