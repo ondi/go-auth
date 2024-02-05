@@ -35,7 +35,7 @@ func NewParseBasic(required int, passwords map[string]string) (self *ParseBasic_
 	return
 }
 
-func (self *ParseBasic_t) Parse(path string, in []byte) (payload []byte, ok bool) {
+func (self *ParseBasic_t) Verify(path string, in []byte) (payload []byte, ok bool) {
 	re, ok := self.passwords.Search(path)
 	if ok && re != nil {
 		return in, re.Match(in)

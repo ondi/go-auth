@@ -11,11 +11,15 @@ import (
 )
 
 func Test001(t *testing.T) {
-	bearer := NewTokenBearer(NewExp())
-	find := NewFindBearer(bearer)
-	parser, err := NewParseBearer(1, nil)
-	assert.Assert(t, err == nil)
-	auth := NewAuth(nil, nil, parser, find)
-	_ = auth
-	// auth.ServeHTTP(nil, nil)
+	parse_bearer, err := NewParseBearer(1, nil)
+	assert.NilError(t, err)
+
+	parse_basic, err := NewParseBasic(1, nil)
+	assert.NilError(t, err)
+
+	bearer := NewAuth(nil, nil, parse_bearer, NewFindBearer(NewTokenBearer(NewExp())))
+	basic := NewAuth(nil, nil, parse_basic, NewFindBasic(NewTokenBasic()))
+
+	_, _ = bearer, basic
+	// bearer.ServeHTTP(nil, nil)
 }

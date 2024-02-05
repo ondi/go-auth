@@ -69,7 +69,7 @@ func (self *ParseBearer_t) Names() (res []string) {
 	return
 }
 
-func (self *ParseBearer_t) Parse(path string, in []byte) (payload []byte, ok bool) {
+func (self *ParseBearer_t) Verify(path string, in []byte) (payload []byte, ok bool) {
 	alg, bits, _, payload, signature, err := jwt.Parse(in)
 	if err != nil {
 		return

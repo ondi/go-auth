@@ -22,7 +22,7 @@ var auth_key = 1
 type Token interface {
 	GetName() string
 	GetValue() []byte
-	Parse(payload []byte) error
+	Unmarshal(payload []byte) error
 	Validate(ts time.Time) bool
 }
 
@@ -36,7 +36,7 @@ type FindToken interface {
 }
 
 type Parser interface {
-	Parse(path string, value []byte) (payload []byte, ok bool)
+	Verify(path string, value []byte) (payload []byte, ok bool)
 	Approve(path string, found []Token) (ok bool)
 }
 
@@ -72,8 +72,8 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var out []Token
 	for _, v1 := range self.token {
 		for _, v2 := range v1.Find(r) {
-			if payload, ok := self.parser.Parse(r.URL.Path, v2.GetValue()); ok {
-				if v2.Parse(payload) == nil && v2.Validate(ts) {
+			if payload, ok := self.parser.Verify(r.URL.Path, v2.GetValue()); ok {
+				if v2.Unmarshal(payload) == nil && v2.Validate(ts) {
 					out = append(out, v2)
 				}
 			}
