@@ -22,7 +22,6 @@ var auth_key = 1
 type Token interface {
 	GetName() string
 	GetValue() []byte
-	GetBody() any
 	Parse(payload []byte) error
 	Validate(ts time.Time) bool
 }

@@ -35,10 +35,6 @@ func (self *TokenBasic_t) GetValue() []byte {
 	return self.Value
 }
 
-func (self *TokenBasic_t) GetBody() any {
-	return self.Value
-}
-
 func (self *TokenBasic_t) Parse(payload []byte) error {
 	return nil
 }

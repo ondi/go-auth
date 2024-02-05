@@ -47,10 +47,6 @@ func (self *TokenBearer_t) GetValue() []byte {
 	return self.Value
 }
 
-func (self *TokenBearer_t) GetBody() any {
-	return self.Body
-}
-
 func (self *TokenBearer_t) Parse(payload []byte) error {
 	return json.Unmarshal(payload, &self.Body)
 }
