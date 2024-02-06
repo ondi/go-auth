@@ -54,18 +54,18 @@ func Failed(ctx context.Context) (res []Token) {
 }
 
 type Auth_t struct {
-	token    []FindToken
-	parser   Parser
-	next_ok  http.Handler
-	next_err http.Handler
+	token       []FindToken
+	parser      Parser
+	next_passed http.Handler
+	next_failed http.Handler
 }
 
-func NewAuth(next_ok http.Handler, next_err http.Handler, parser Parser, token ...FindToken) (self *Auth_t) {
+func NewAuth(next_passed http.Handler, next_failed http.Handler, parser Parser, token ...FindToken) (self *Auth_t) {
 	self = &Auth_t{
-		token:    token,
-		parser:   parser,
-		next_ok:  next_ok,
-		next_err: next_err,
+		token:       token,
+		parser:      parser,
+		next_passed: next_passed,
+		next_failed: next_failed,
 	}
 	return
 }
@@ -75,21 +75,17 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var passed, failed []Token
 	for _, v1 := range self.token {
 		for _, v2 := range v1.Find(r) {
-			count := len(passed)
-			if payload, ok := self.parser.Verify(r.URL.Path, v2.GetValue()); ok {
-				if v2.Unmarshal(payload) == nil && v2.Validate(ts) {
-					passed = append(passed, v2)
-				}
-			}
-			if count == len(passed) {
+			if payload, ok := self.parser.Verify(r.URL.Path, v2.GetValue()); ok && v2.Unmarshal(payload) == nil && v2.Validate(ts) {
+				passed = append(passed, v2)
+			} else {
 				failed = append(failed, v2)
 			}
 		}
 	}
 	if self.parser.Approve(r.URL.Path, passed) {
-		self.next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), &auth_passed, passed)))
+		self.next_passed.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), &auth_passed, passed)))
 	} else {
-		self.next_err.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), &auth_failed, failed)))
+		self.next_failed.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), &auth_failed, failed)))
 	}
 }
 
