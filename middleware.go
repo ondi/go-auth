@@ -43,7 +43,7 @@ type Parser interface {
 	Approve(path string, passed []Token) (ok bool)
 }
 
-func Tokens(ctx context.Context) (res []Token) {
+func Passed(ctx context.Context) (res []Token) {
 	res, _ = ctx.Value(&auth_passed).([]Token)
 	return
 }
