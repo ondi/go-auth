@@ -16,8 +16,11 @@ const (
 	HEADER = "Authorization"
 )
 
-// &auth_key used for context.Value key
-var auth_key = 1
+// &auth_{passed,failed} used for context.Value key
+var (
+	auth_passed = 1
+	auth_failed = 1
+)
 
 type Token interface {
 	GetName() string
@@ -37,52 +40,56 @@ type FindToken interface {
 
 type Parser interface {
 	Verify(path string, value []byte) (payload []byte, ok bool)
-	Approve(path string, found []Token) (ok bool)
+	Approve(path string, passed []Token) (ok bool)
 }
 
-func CtxGet(ctx context.Context) (res []Token) {
-	res, _ = ctx.Value(&auth_key).([]Token)
+func Tokens(ctx context.Context) (res []Token) {
+	res, _ = ctx.Value(&auth_passed).([]Token)
 	return
 }
 
-func ctx_set(ctx context.Context, value []Token) context.Context {
-	return context.WithValue(ctx, &auth_key, value)
+func Failed(ctx context.Context) (res []Token) {
+	res, _ = ctx.Value(&auth_failed).([]Token)
+	return
 }
 
 type Auth_t struct {
-	token      []FindToken
-	parser     Parser
-	next_ok    http.Handler
-	next_error http.Handler
+	token    []FindToken
+	parser   Parser
+	next_ok  http.Handler
+	next_err http.Handler
 }
 
-func NewAuth(next_ok http.Handler, next_error http.Handler, parser Parser, token ...FindToken) (self *Auth_t) {
+func NewAuth(next_ok http.Handler, next_err http.Handler, parser Parser, token ...FindToken) (self *Auth_t) {
 	self = &Auth_t{
-		token:      token,
-		parser:     parser,
-		next_ok:    next_ok,
-		next_error: next_error,
+		token:    token,
+		parser:   parser,
+		next_ok:  next_ok,
+		next_err: next_err,
 	}
 	return
 }
 
 func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ts := time.Now()
-	ctx := r.Context()
-	var out []Token
+	var passed, failed []Token
 	for _, v1 := range self.token {
 		for _, v2 := range v1.Find(r) {
+			count := len(passed)
 			if payload, ok := self.parser.Verify(r.URL.Path, v2.GetValue()); ok {
 				if v2.Unmarshal(payload) == nil && v2.Validate(ts) {
-					out = append(out, v2)
+					passed = append(passed, v2)
 				}
+			}
+			if count == len(passed) {
+				failed = append(failed, v2)
 			}
 		}
 	}
-	if self.parser.Approve(r.URL.Path, out) {
-		self.next_ok.ServeHTTP(w, r.WithContext(ctx_set(ctx, out)))
+	if self.parser.Approve(r.URL.Path, passed) {
+		self.next_ok.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), &auth_passed, passed)))
 	} else {
-		self.next_error.ServeHTTP(w, r.WithContext(ctx))
+		self.next_err.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), &auth_failed, failed)))
 	}
 }
 
