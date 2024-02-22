@@ -19,11 +19,11 @@ const (
 	TYPE_DER Type = 2
 )
 
-type KeyType_t struct {
-	Data []byte
-	Type Type
-	Hmac bool
-	Cert bool
+type Key_t struct {
+	Value []byte
+	Type  Type
+	Hmac  bool
+	Cert  bool
 }
 
 type Signer interface {
@@ -34,8 +34,8 @@ type Sign_t struct {
 	signer jwt.Signer
 }
 
-func ReadFile(in string) (out KeyType_t, err error) {
-	if out.Data, err = os.ReadFile(in); err != nil {
+func ReadFile(in string) (out Key_t, err error) {
+	if out.Value, err = os.ReadFile(in); err != nil {
 		return
 	}
 	if strings.Contains(in, "cert") {
@@ -52,15 +52,15 @@ func ReadFile(in string) (out KeyType_t, err error) {
 	return
 }
 
-func NewSign(in KeyType_t) (out *Sign_t, err error) {
+func NewSign(in Key_t) (out *Sign_t, err error) {
 	var res jwt.Signer
 	switch {
 	case in.Hmac:
-		res, err = jwt.NewHmacKey(in.Data)
+		res, err = jwt.NewHmacKey(in.Value)
 	case in.Type == TYPE_DER:
-		res, err = jwt.NewSignDer(in.Data)
+		res, err = jwt.NewSignDer(in.Value)
 	default:
-		res, err = jwt.NewSignPem(in.Data)
+		res, err = jwt.NewSignPem(in.Value)
 	}
 	if err != nil {
 		return

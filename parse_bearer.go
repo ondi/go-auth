@@ -16,12 +16,12 @@ type ParseBearer_t struct {
 	required int
 }
 
-func KeysGlob(pattern string, in []KeyType_t) ([]KeyType_t, error) {
+func KeysGlob(pattern string, in []Key_t) ([]Key_t, error) {
 	matched, err := filepath.Glob(pattern)
 	if err != nil {
 		return in, err
 	}
-	var key KeyType_t
+	var key Key_t
 	for _, v := range matched {
 		if key, err = ReadFile(v); err != nil {
 			return in, err
@@ -31,25 +31,25 @@ func KeysGlob(pattern string, in []KeyType_t) ([]KeyType_t, error) {
 	return in, err
 }
 
-func NewParseBearer(required int, keys []KeyType_t) (res *ParseBearer_t, err error) {
+func NewParseBearer(required int, keys []Key_t) (res *ParseBearer_t, err error) {
 	res = &ParseBearer_t{
 		required: required,
 	}
 	var verify jwt.Verifier
 	for _, key := range keys {
 		if key.Hmac {
-			verify, err = jwt.NewHmacKey(key.Data)
+			verify, err = jwt.NewHmacKey(key.Value)
 		} else if key.Cert {
 			if key.Type == TYPE_DER {
-				verify, err = jwt.NewVerifyCertDer(key.Data)
+				verify, err = jwt.NewVerifyCertDer(key.Value)
 			} else {
-				verify, err = jwt.NewVerifyCertPem(key.Data)
+				verify, err = jwt.NewVerifyCertPem(key.Value)
 			}
 		} else {
 			if key.Type == TYPE_DER {
-				verify, err = jwt.NewVerifyKeyDer(key.Data)
+				verify, err = jwt.NewVerifyKeyDer(key.Value)
 			} else {
-				verify, err = jwt.NewVerifyKeyPem(key.Data)
+				verify, err = jwt.NewVerifyKeyPem(key.Value)
 			}
 		}
 		if err != nil {
