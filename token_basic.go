@@ -35,7 +35,7 @@ func (self *TokenBasic_t) GetValue() []byte {
 	return self.Value
 }
 
-func (self *TokenBasic_t) Unmarshal(payload []byte) error {
+func (self *TokenBasic_t) Decode(payload []byte) error {
 	return nil
 }
 

@@ -25,7 +25,7 @@ var (
 type Token interface {
 	GetName() string
 	GetValue() []byte
-	Unmarshal(payload []byte) error
+	Decode(payload []byte) error
 	Validate(ts time.Time) bool
 }
 
@@ -75,7 +75,7 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var passed, failed []Token
 	for _, v1 := range self.token {
 		for _, v2 := range v1.Find(r) {
-			if payload, ok := self.parser.Verify(r.URL.Path, v2.GetValue()); ok && v2.Unmarshal(payload) == nil && v2.Validate(ts) {
+			if payload, ok := self.parser.Verify(r.URL.Path, v2.GetValue()); ok && v2.Decode(payload) == nil && v2.Validate(ts) {
 				passed = append(passed, v2)
 			} else {
 				failed = append(failed, v2)
