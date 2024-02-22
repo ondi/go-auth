@@ -15,14 +15,14 @@ import (
 type Type int
 
 const (
-	TYPE_PEM  Type = 1
-	TYPE_DER  Type = 2
-	TYPE_HMAC Type = 3
+	TYPE_PEM Type = 1
+	TYPE_DER Type = 2
 )
 
 type KeyType_t struct {
 	Data []byte
 	Type Type
+	Hmac bool
 	Cert bool
 }
 
@@ -42,8 +42,9 @@ func ReadFile(in string) (out KeyType_t, err error) {
 		out.Cert = true
 	}
 	if strings.Contains(in, "hmac") {
-		out.Type = TYPE_HMAC
-	} else if strings.HasSuffix(in, ".der") {
+		out.Hmac = true
+	}
+	if strings.HasSuffix(in, ".der") {
 		out.Type = TYPE_DER
 	} else {
 		out.Type = TYPE_PEM
@@ -53,10 +54,10 @@ func ReadFile(in string) (out KeyType_t, err error) {
 
 func NewSign(in KeyType_t) (out *Sign_t, err error) {
 	var res jwt.Signer
-	switch in.Type {
-	case TYPE_HMAC:
+	switch {
+	case in.Hmac:
 		res, err = jwt.NewHmacKey(in.Data)
-	case TYPE_DER:
+	case in.Type == TYPE_DER:
 		res, err = jwt.NewSignDer(in.Data)
 	default:
 		res, err = jwt.NewSignPem(in.Data)

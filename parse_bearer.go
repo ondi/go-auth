@@ -38,7 +38,7 @@ func NewParseBearer(required int, keys []KeyType_t) (res *ParseBearer_t, err err
 	}
 	var verify jwt.Verifier
 	for _, key := range keys {
-		if key.Type == TYPE_HMAC {
+		if key.Hmac {
 			verify, err = jwt.NewHmacKey(key.Data)
 		} else if key.Cert {
 			if key.Type == TYPE_DER {
