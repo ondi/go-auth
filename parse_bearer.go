@@ -16,20 +16,19 @@ type ParseBearer_t struct {
 	required int
 }
 
-func NewParseBearerGlob(required int, pattern string) (res *ParseBearer_t, err error) {
+func KeysGlob(pattern string) (keys []KeyType_t, err error) {
 	matched, err := filepath.Glob(pattern)
 	if err != nil {
 		return
 	}
 	var key KeyType_t
-	var keys []KeyType_t
 	for _, v := range matched {
 		if key, err = ReadFile(v); err != nil {
 			return
 		}
 		keys = append(keys, key)
 	}
-	return NewParseBearer(required, keys)
+	return
 }
 
 func NewParseBearer(required int, keys []KeyType_t) (res *ParseBearer_t, err error) {
