@@ -12,6 +12,20 @@ import (
 	"github.com/ondi/go-jwt"
 )
 
+type Type int
+
+const (
+	TYPE_PEM  Type = 1
+	TYPE_DER  Type = 2
+	TYPE_HMAC Type = 3
+)
+
+type KeyType_t struct {
+	Data []byte
+	Type Type
+	Cert bool
+}
+
 type Signer interface {
 	Sign(bits int64, payload []byte, out *bytes.Buffer) error
 }
@@ -20,18 +34,32 @@ type Sign_t struct {
 	signer jwt.Signer
 }
 
-func NewSign(file string) (out *Sign_t, err error) {
-	buf, err := os.ReadFile(file)
-	if err != nil {
+func ReadFile(in string) (out KeyType_t, err error) {
+	if out.Data, err = os.ReadFile(in); err != nil {
 		return
 	}
-	var res jwt.Signer
-	if strings.Contains(file, "hmac") {
-		res, err = jwt.NewHmacKey(buf)
-	} else if strings.HasSuffix(file, ".der") {
-		res, err = jwt.NewSignDer(buf)
+	if strings.Contains(in, "cert") {
+		out.Cert = true
+	}
+	if strings.Contains(in, "hmac") {
+		out.Type = TYPE_HMAC
+	} else if strings.HasSuffix(in, ".der") {
+		out.Type = TYPE_DER
 	} else {
-		res, err = jwt.NewSignPem(buf)
+		out.Type = TYPE_PEM
+	}
+	return
+}
+
+func NewSign(in KeyType_t) (out *Sign_t, err error) {
+	var res jwt.Signer
+	switch in.Type {
+	case TYPE_HMAC:
+		res, err = jwt.NewHmacKey(in.Data)
+	case TYPE_DER:
+		res, err = jwt.NewSignDer(in.Data)
+	default:
+		res, err = jwt.NewSignPem(in.Data)
 	}
 	if err != nil {
 		return

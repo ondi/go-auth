@@ -5,7 +5,6 @@
 package auth
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -22,32 +21,36 @@ func NewParseBearerGlob(required int, pattern string) (res *ParseBearer_t, err e
 	if err != nil {
 		return
 	}
-	return NewParseBearer(required, matched)
+	var key KeyType_t
+	var keys []KeyType_t
+	for _, v := range matched {
+		if key, err = ReadFile(v); err != nil {
+			return
+		}
+		keys = append(keys, key)
+	}
+	return NewParseBearer(required, keys)
 }
 
-func NewParseBearer(required int, files []string) (res *ParseBearer_t, err error) {
+func NewParseBearer(required int, keys []KeyType_t) (res *ParseBearer_t, err error) {
 	res = &ParseBearer_t{
 		required: required,
 	}
-	var buf []byte
 	var verify jwt.Verifier
-	for _, file := range files {
-		if buf, err = os.ReadFile(file); err != nil {
-			return
-		}
-		if strings.Contains(file, "hmac") {
-			verify, err = jwt.NewHmacKey(buf)
-		} else if strings.Contains(file, "key") {
-			if strings.HasSuffix(file, ".der") {
-				verify, err = jwt.NewVerifyKeyDer(buf)
+	for _, key := range keys {
+		if key.Type == TYPE_HMAC {
+			verify, err = jwt.NewHmacKey(key.Data)
+		} else if key.Cert {
+			if key.Type == TYPE_DER {
+				verify, err = jwt.NewVerifyCertDer(key.Data)
 			} else {
-				verify, err = jwt.NewVerifyKeyPem(buf)
+				verify, err = jwt.NewVerifyCertPem(key.Data)
 			}
 		} else {
-			if strings.HasSuffix(file, ".der") {
-				verify, err = jwt.NewVerifyCertDer(buf)
+			if key.Type == TYPE_DER {
+				verify, err = jwt.NewVerifyKeyDer(key.Data)
 			} else {
-				verify, err = jwt.NewVerifyCertPem(buf)
+				verify, err = jwt.NewVerifyKeyPem(key.Data)
 			}
 		}
 		if err != nil {
