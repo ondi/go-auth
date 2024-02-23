@@ -12,16 +12,9 @@ import (
 	"github.com/ondi/go-jwt"
 )
 
-type Type int
-
-const (
-	TYPE_PEM Type = 1
-	TYPE_DER Type = 2
-)
-
 type Key_t struct {
 	Value []byte
-	Type  Type
+	DER   bool // default PEM
 	Hmac  bool
 	Cert  bool
 }
@@ -45,9 +38,7 @@ func ReadFile(in string) (out Key_t, err error) {
 		out.Hmac = true
 	}
 	if strings.HasSuffix(in, ".der") {
-		out.Type = TYPE_DER
-	} else {
-		out.Type = TYPE_PEM
+		out.DER = true
 	}
 	return
 }
@@ -57,7 +48,7 @@ func NewSign(in Key_t) (out *Sign_t, err error) {
 	switch {
 	case in.Hmac:
 		res, err = jwt.NewHmacKey(in.Value)
-	case in.Type == TYPE_DER:
+	case in.DER:
 		res, err = jwt.NewSignDer(in.Value)
 	default:
 		res, err = jwt.NewSignPem(in.Value)

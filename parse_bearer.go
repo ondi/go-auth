@@ -40,13 +40,13 @@ func NewParseBearer(required int, keys []Key_t) (res *ParseBearer_t, err error) 
 		if key.Hmac {
 			verify, err = jwt.NewHmacKey(key.Value)
 		} else if key.Cert {
-			if key.Type == TYPE_DER {
+			if key.DER {
 				verify, err = jwt.NewVerifyCertDer(key.Value)
 			} else {
 				verify, err = jwt.NewVerifyCertPem(key.Value)
 			}
 		} else {
-			if key.Type == TYPE_DER {
+			if key.DER {
 				verify, err = jwt.NewVerifyKeyDer(key.Value)
 			} else {
 				verify, err = jwt.NewVerifyKeyPem(key.Value)
