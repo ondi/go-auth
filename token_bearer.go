@@ -92,8 +92,10 @@ type Exp_t struct {
 	Exp int64
 }
 
-func NewExp() *Exp_t {
-	return &Exp_t{Nbf: 60, Exp: -60}
+// nbf = -60
+// exp = 60
+func NewExp(nbf int64, exp int64) *Exp_t {
+	return &Exp_t{Nbf: nbf, Exp: exp}
 }
 
 func (self *Exp_t) Validate(ts time.Time, token *TokenBearer_t) (ok bool) {
@@ -104,7 +106,7 @@ func (self *Exp_t) Validate(ts time.Time, token *TokenBearer_t) (ok bool) {
 		if test, ok = temp.(float64); !ok {
 			return
 		}
-		if ok = ts.Unix()+self.Nbf >= int64(test); !ok {
+		if ok = ts.Unix() >= int64(test)+self.Nbf; !ok {
 			return
 		}
 	}
@@ -114,7 +116,7 @@ func (self *Exp_t) Validate(ts time.Time, token *TokenBearer_t) (ok bool) {
 		if test, ok = temp.(float64); !ok {
 			return
 		}
-		if ok = ts.Unix()+self.Exp < int64(test); !ok {
+		if ok = ts.Unix() < int64(test)+self.Exp; !ok {
 			return
 		}
 	}
