@@ -35,14 +35,14 @@ type FindToken interface {
 	Find(r *http.Request) []Token
 }
 
-type Found_t struct {
-	Passed []Token
-	Failed []Token
-}
-
 type Parser interface {
 	Verify(path string, value []byte) (payload []byte, ok bool)
 	Approve(path string, passed []Token) (ok bool)
+}
+
+type Found_t struct {
+	Passed []Token
+	Failed []Token
 }
 
 func Found(ctx context.Context) (res Found_t) {
