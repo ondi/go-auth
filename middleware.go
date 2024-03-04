@@ -16,11 +16,8 @@ const (
 	HEADER = "Authorization"
 )
 
-// &auth_{passed,failed} used for context.Value key
-var (
-	auth_passed = 1
-	auth_failed = 1
-)
+// &auth used for context.Value key
+var auth = 1
 
 type Token interface {
 	GetName() string
@@ -38,18 +35,18 @@ type FindToken interface {
 	Find(r *http.Request) []Token
 }
 
+type Found_t struct {
+	Passed []Token
+	Failed []Token
+}
+
 type Parser interface {
 	Verify(path string, value []byte) (payload []byte, ok bool)
 	Approve(path string, passed []Token) (ok bool)
 }
 
-func Passed(ctx context.Context) (res []Token) {
-	res, _ = ctx.Value(&auth_passed).([]Token)
-	return
-}
-
-func Failed(ctx context.Context) (res []Token) {
-	res, _ = ctx.Value(&auth_failed).([]Token)
+func Found(ctx context.Context) (res Found_t) {
+	res, _ = ctx.Value(&auth).(Found_t)
 	return
 }
 
@@ -72,20 +69,20 @@ func NewAuth(next_passed http.Handler, next_failed http.Handler, parser Parser, 
 
 func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ts := time.Now()
-	var passed, failed []Token
+	var found Found_t
 	for _, v1 := range self.token {
 		for _, v2 := range v1.Find(r) {
 			if payload, ok := self.parser.Verify(r.URL.Path, v2.GetValue()); ok && v2.Decode(payload) == nil && v2.Validate(ts) {
-				passed = append(passed, v2)
+				found.Passed = append(found.Passed, v2)
 			} else {
-				failed = append(failed, v2)
+				found.Failed = append(found.Failed, v2)
 			}
 		}
 	}
-	if self.parser.Approve(r.URL.Path, passed) {
-		self.next_passed.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), &auth_passed, passed)))
+	if self.parser.Approve(r.URL.Path, found.Passed) {
+		self.next_passed.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), &auth, found)))
 	} else {
-		self.next_failed.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), &auth_failed, failed)))
+		self.next_failed.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), &auth, found)))
 	}
 }
 
