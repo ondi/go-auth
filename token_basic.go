@@ -36,12 +36,7 @@ func (self *TokenBasic_t) GetValue() []byte {
 	return self.Value
 }
 
-func (self *TokenBasic_t) SetError(in error) error {
-	self.Error = in
-	return in
-}
-
-func (self *TokenBasic_t) Decode(payload []byte) error {
+func (self *TokenBasic_t) Decode([]byte, error) error {
 	return nil
 }
 

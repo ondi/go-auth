@@ -46,12 +46,10 @@ func (self *TokenBearer_t) GetValue() []byte {
 	return self.Value
 }
 
-func (self *TokenBearer_t) SetError(in error) error {
-	self.Error = in
-	return in
-}
-
-func (self *TokenBearer_t) Decode(payload []byte) error {
+func (self *TokenBearer_t) Decode(payload []byte, verify_error error) error {
+	if self.Error = verify_error; self.Error != nil {
+		return self.Error
+	}
 	self.Error = json.Unmarshal(payload, &self.Body)
 	return self.Error
 }
