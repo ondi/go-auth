@@ -6,6 +6,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 )
@@ -19,9 +20,12 @@ const (
 // &auth used for context.Value key
 var auth = 1
 
+var VERIFY_ERROR = errors.New("verification failed")
+
 type Token interface {
 	GetName() string
 	GetValue() []byte
+	SetError(error) error
 	Decode(payload []byte) error
 	Validate(ts time.Time) bool
 }
@@ -36,7 +40,7 @@ type FindToken interface {
 }
 
 type Parser interface {
-	Verify(path string, value []byte) (payload []byte, ok bool)
+	Verify(path string, value []byte) (payload []byte, err error)
 	Approve(path string, passed []Token) (ok bool)
 }
 
@@ -72,7 +76,7 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var found Found_t
 	for _, v1 := range self.token {
 		for _, v2 := range v1.Find(r) {
-			if payload, ok := self.parser.Verify(r.URL.Path, v2.GetValue()); ok && v2.Decode(payload) == nil && v2.Validate(ts) {
+			if payload, err := self.parser.Verify(r.URL.Path, v2.GetValue()); v2.SetError(err) == nil && v2.Decode(payload) == nil && v2.Validate(ts) {
 				found.Passed = append(found.Passed, v2)
 			} else {
 				found.Failed = append(found.Failed, v2)

@@ -35,18 +35,19 @@ func NewParseBasic(required int, passwords map[string]string) (self *ParseBasic_
 	return
 }
 
-func (self *ParseBasic_t) Verify(path string, in []byte) (payload []byte, ok bool) {
+func (self *ParseBasic_t) Verify(path string, in []byte) (payload []byte, err error) {
 	re, ok := self.passwords.Search(path)
-	if ok && re != nil {
-		return in, re.Match(in)
+	if ok && re != nil && re.Match(in) {
+		return in, nil
 	}
-	return
+	return in, VERIFY_ERROR
 }
 
 func (self *ParseBasic_t) Approve(path string, found []Token) (ok bool) {
 	if len(found) >= self.required {
 		return true
 	}
+	// page has no password, token not provided
 	re, ok := self.passwords.Search(path)
 	if ok {
 		return re == nil

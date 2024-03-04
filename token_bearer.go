@@ -20,6 +20,7 @@ type TokenBearer_t struct {
 	Name       string
 	Value      []byte
 	Body       map[string]interface{}
+	Error      error
 	validators []Validator
 }
 
@@ -45,8 +46,14 @@ func (self *TokenBearer_t) GetValue() []byte {
 	return self.Value
 }
 
+func (self *TokenBearer_t) SetError(in error) error {
+	self.Error = in
+	return in
+}
+
 func (self *TokenBearer_t) Decode(payload []byte) error {
-	return json.Unmarshal(payload, &self.Body)
+	self.Error = json.Unmarshal(payload, &self.Body)
+	return self.Error
 }
 
 func (self *TokenBearer_t) Validate(ts time.Time) (ok bool) {

@@ -71,7 +71,7 @@ func (self *ParseBearer_t) Names() (res []string) {
 	return
 }
 
-func (self *ParseBearer_t) Verify(path string, in []byte) (payload []byte, ok bool) {
+func (self *ParseBearer_t) Verify(path string, in []byte) (payload []byte, err error) {
 	alg, bits, _, payload, signature, err := jwt.Parse(in)
 	if err != nil {
 		return
@@ -80,11 +80,11 @@ func (self *ParseBearer_t) Verify(path string, in []byte) (payload []byte, ok bo
 		if strings.HasPrefix(alg, v.Name()) == false {
 			continue
 		}
-		if ok = jwt.Verify(v, bits, signature, in); ok {
+		if jwt.Verify(v, bits, signature, in) {
 			return
 		}
 	}
-	return
+	return payload, VERIFY_ERROR
 }
 
 func (self *ParseBearer_t) Approve(path string, found []Token) (ok bool) {

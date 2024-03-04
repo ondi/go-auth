@@ -14,6 +14,7 @@ import (
 type TokenBasic_t struct {
 	Name  string
 	Value []byte
+	Error error
 }
 
 func NewTokenBasic() *TokenBasic_t {
@@ -33,6 +34,11 @@ func (self *TokenBasic_t) GetName() string {
 
 func (self *TokenBasic_t) GetValue() []byte {
 	return self.Value
+}
+
+func (self *TokenBasic_t) SetError(in error) error {
+	self.Error = in
+	return in
 }
 
 func (self *TokenBasic_t) Decode(payload []byte) error {
