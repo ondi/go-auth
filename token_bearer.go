@@ -61,7 +61,7 @@ func (self *TokenBearer_t) Validate(payload []byte, verify_error error, ts time.
 	return nil
 }
 
-func (self *TokenBearer_t) Error() error {
+func (self *TokenBearer_t) GetError() error {
 	return self.Err
 }
 

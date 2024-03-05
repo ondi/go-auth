@@ -41,7 +41,7 @@ func (self *TokenBasic_t) Validate(payload []byte, verify_error error, ts time.T
 	return self.Err
 }
 
-func (self *TokenBasic_t) Error() error {
+func (self *TokenBasic_t) GetError() error {
 	return self.Err
 }
 

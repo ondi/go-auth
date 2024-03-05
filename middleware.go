@@ -28,7 +28,7 @@ type Token interface {
 	GetName() string
 	GetValue() []byte
 	Validate(payload []byte, verify_error error, ts time.Time) error
-	Error() error
+	GetError() error
 }
 
 type CreateToken interface {
