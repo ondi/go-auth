@@ -46,21 +46,19 @@ func (self *TokenBearer_t) GetValue() []byte {
 	return self.Value
 }
 
-func (self *TokenBearer_t) Decode(payload []byte, verify_error error) error {
+func (self *TokenBearer_t) Validate(payload []byte, verify_error error, ts time.Time) error {
 	if self.Error = verify_error; self.Error != nil {
 		return self.Error
 	}
-	self.Error = json.Unmarshal(payload, &self.Body)
-	return self.Error
-}
-
-func (self *TokenBearer_t) Validate(ts time.Time) (ok bool) {
+	if self.Error = json.Unmarshal(payload, &self.Body); self.Error != nil {
+		return self.Error
+	}
 	for _, v := range self.validators {
 		if v.Validate(ts, self) == false {
-			return false
+			return VALIDATE_ERROR
 		}
 	}
-	return true
+	return nil
 }
 
 type FindBearer_t struct {

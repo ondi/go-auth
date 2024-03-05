@@ -40,8 +40,8 @@ func (self *TokenBasic_t) Decode([]byte, error) error {
 	return nil
 }
 
-func (self *TokenBasic_t) Validate(ts time.Time) (ok bool) {
-	return true
+func (self *TokenBasic_t) Validate(payload []byte, varify_error error, ts time.Time) error {
+	return nil
 }
 
 type FindBasic_t struct {

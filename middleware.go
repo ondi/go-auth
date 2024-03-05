@@ -21,12 +21,12 @@ const (
 var auth = 1
 
 var VERIFY_ERROR = errors.New("verification failed")
+var VALIDATE_ERROR = errors.New("validation failed")
 
 type Token interface {
 	GetName() string
 	GetValue() []byte
-	Decode(payload []byte, verify_error error) error
-	Validate(ts time.Time) bool
+	Validate(payload []byte, verify_error error, ts time.Time) error
 }
 
 type CreateToken interface {
@@ -75,7 +75,7 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var found Found_t
 	for _, v1 := range self.token {
 		for _, v2 := range v1.Find(r) {
-			if v2.Decode(self.parser.Verify(r.URL.Path, v2.GetValue())) == nil && v2.Validate(ts) {
+			if payload, err := self.parser.Verify(r.URL.Path, v2.GetValue()); v2.Validate(payload, err, ts) == nil {
 				found.Passed = append(found.Passed, v2)
 			} else {
 				found.Failed = append(found.Failed, v2)
