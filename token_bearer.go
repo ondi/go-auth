@@ -13,7 +13,7 @@ import (
 )
 
 type Validator interface {
-	Validate(ts time.Time, token *TokenBearer_t) bool
+	Validate(ts time.Time, token *TokenBearer_t) error
 }
 
 type TokenBearer_t struct {
@@ -54,8 +54,8 @@ func (self *TokenBearer_t) Validate(payload []byte, verify_error error, ts time.
 		return self.Error
 	}
 	for _, v := range self.validators {
-		if v.Validate(ts, self) == false {
-			return VALIDATE_ERROR
+		if self.Error = v.Validate(ts, self); self.Error != nil {
+			return self.Error
 		}
 	}
 	return nil
@@ -101,27 +101,27 @@ func NewExp(nbf int64, exp int64) *Exp_t {
 	return &Exp_t{Nbf: nbf, Exp: exp}
 }
 
-func (self *Exp_t) Validate(ts time.Time, token *TokenBearer_t) (ok bool) {
+func (self *Exp_t) Validate(ts time.Time, token *TokenBearer_t) error {
 	var test float64
 	// not before
 	temp, ok := token.Body["nbf"]
 	if ok {
 		if test, ok = temp.(float64); !ok {
-			return
+			return VALIDATE_ERROR
 		}
 		if ok = ts.Unix() >= int64(test)+self.Nbf; !ok {
-			return
+			return VALIDATE_ERROR
 		}
 	}
 	// expire
 	temp, ok = token.Body["exp"]
 	if ok {
 		if test, ok = temp.(float64); !ok {
-			return
+			return VALIDATE_ERROR
 		}
 		if ok = ts.Unix() < int64(test)+self.Exp; !ok {
-			return
+			return VALIDATE_ERROR
 		}
 	}
-	return true
+	return nil
 }
