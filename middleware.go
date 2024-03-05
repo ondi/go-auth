@@ -72,7 +72,7 @@ func NewAuth(next_passed http.Handler, next_failed http.Handler, parser Parser, 
 
 func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ts := time.Now()
-	var found Found_t
+	found, _ := r.Context().Value(&auth).(Found_t)
 	for _, v1 := range self.token {
 		for _, v2 := range v1.Find(r) {
 			if payload, err := self.parser.Verify(r.URL.Path, v2.GetValue()); v2.Validate(payload, err, ts) == nil {
