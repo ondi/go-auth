@@ -17,11 +17,12 @@ const (
 	HEADER = "Authorization"
 )
 
-// &auth used for context.Value key
-var auth = 1
-
-var VERIFY_ERROR = errors.New("verification failed")
-var VALIDATE_ERROR = errors.New("validation failed")
+var (
+	// &auth used for context.Value key
+	auth           = 1
+	VERIFY_ERROR   = errors.New("verify failed")
+	VALIDATE_ERROR = errors.New("validate failed")
+)
 
 type Token interface {
 	GetName() string
