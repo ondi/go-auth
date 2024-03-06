@@ -36,12 +36,12 @@ func (self *TokenBasic_t) GetValue() []byte {
 	return self.Value
 }
 
-func (self *TokenBasic_t) Validate(payload []byte, verify_error error, ts time.Time) error {
-	self.Err = verify_error
+func (self *TokenBasic_t) GetError() error {
 	return self.Err
 }
 
-func (self *TokenBasic_t) GetError() error {
+func (self *TokenBasic_t) Validate(payload []byte, verify_error error, ts time.Time) error {
+	self.Err = verify_error
 	return self.Err
 }
 

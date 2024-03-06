@@ -46,6 +46,10 @@ func (self *TokenBearer_t) GetValue() []byte {
 	return self.Value
 }
 
+func (self *TokenBearer_t) GetError() error {
+	return self.Err
+}
+
 func (self *TokenBearer_t) Validate(payload []byte, verify_error error, ts time.Time) error {
 	if self.Err = verify_error; self.Err != nil {
 		return self.Err
@@ -59,10 +63,6 @@ func (self *TokenBearer_t) Validate(payload []byte, verify_error error, ts time.
 		}
 	}
 	return nil
-}
-
-func (self *TokenBearer_t) GetError() error {
-	return self.Err
 }
 
 type FindBearer_t struct {
