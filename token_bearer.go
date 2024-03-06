@@ -67,24 +67,30 @@ func (self *TokenBearer_t) GetError() error {
 
 type FindBearer_t struct {
 	*TokenBearer_t
+	keys []string
 }
 
-func NewFindBearer(bearer *TokenBearer_t) *FindBearer_t {
-	return &FindBearer_t{TokenBearer_t: bearer}
+func NewFindBearer(bearer *TokenBearer_t, extra_keys ...string) *FindBearer_t {
+	return &FindBearer_t{
+		TokenBearer_t: bearer,
+		keys:          append([]string{HEADER}, extra_keys...),
+	}
 }
 
 func (self *FindBearer_t) Find(r *http.Request) (out []Token) {
 	var ix int
 	var token string
-	for _, token = range r.Header[HEADER] {
-		if ix = strings.IndexByte(token, ' '); ix > -1 && strings.EqualFold(token[:ix], BEARER) {
-			out = append(out, self.Create(BEARER, []byte(token[ix+1:])))
-		}
-	}
-	if c, err := r.Cookie(HEADER); err == nil {
-		if token, err = url.QueryUnescape(c.Value); err == nil {
+	for _, v := range self.keys {
+		for _, token = range r.Header[v] {
 			if ix = strings.IndexByte(token, ' '); ix > -1 && strings.EqualFold(token[:ix], BEARER) {
 				out = append(out, self.Create(BEARER, []byte(token[ix+1:])))
+			}
+		}
+		if c, err := r.Cookie(v); err == nil {
+			if token, err = url.QueryUnescape(c.Value); err == nil {
+				if ix = strings.IndexByte(token, ' '); ix > -1 && strings.EqualFold(token[:ix], BEARER) {
+					out = append(out, self.Create(BEARER, []byte(token[ix+1:])))
+				}
 			}
 		}
 	}
