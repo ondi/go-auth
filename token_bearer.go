@@ -50,7 +50,7 @@ func (self *TokenBearer_t) GetError() error {
 	return self.Err
 }
 
-func (self *TokenBearer_t) Validate(payload []byte, verify_error error, ts time.Time) error {
+func (self *TokenBearer_t) Validate(ts time.Time, payload []byte, verify_error error) error {
 	if self.Err = verify_error; self.Err != nil {
 		return self.Err
 	}

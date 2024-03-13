@@ -28,7 +28,7 @@ type Token interface {
 	GetName() string
 	GetValue() []byte
 	GetError() error
-	Validate(payload []byte, verify_error error, ts time.Time) error
+	Validate(ts time.Time, payload []byte, verify_error error) error
 }
 
 type CreateToken interface {
@@ -77,7 +77,7 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	found, _ := r.Context().Value(&auth).(Found_t)
 	for _, v1 := range self.token {
 		for _, v2 := range v1.Find(r) {
-			if payload, err := self.parser.Verify(r.URL.Path, v2.GetValue()); v2.Validate(payload, err, ts) == nil {
+			if payload, err := self.parser.Verify(r.URL.Path, v2.GetValue()); v2.Validate(ts, payload, err) == nil {
 				found.Passed = append(found.Passed, v2)
 			} else {
 				found.Failed = append(found.Failed, v2)

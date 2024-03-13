@@ -40,7 +40,7 @@ func (self *TokenBasic_t) GetError() error {
 	return self.Err
 }
 
-func (self *TokenBasic_t) Validate(payload []byte, verify_error error, ts time.Time) error {
+func (self *TokenBasic_t) Validate(ts time.Time, payload []byte, verify_error error) error {
 	self.Err = verify_error
 	return self.Err
 }
