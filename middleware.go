@@ -103,6 +103,6 @@ func NewStatus(StatusCode int) *Status_t {
 	return &Status_t{StatusCode: StatusCode}
 }
 
-func NewStatus401(StatusCode ...int) *Status_t {
+func NewStatus401() *Status_t {
 	return &Status_t{StatusCode: http.StatusUnauthorized}
 }
