@@ -91,14 +91,18 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type WriteStatus_t struct {
-	Status int
+type Status_t struct {
+	StatusCode int
 }
 
-func (self *WriteStatus_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(self.Status)
+func (self *Status_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(self.StatusCode)
 }
 
-func New401() *WriteStatus_t {
-	return &WriteStatus_t{Status: http.StatusUnauthorized}
+func NewStatus(StatusCode int) *Status_t {
+	return &Status_t{StatusCode: StatusCode}
+}
+
+func NewStatus401(StatusCode ...int) *Status_t {
+	return &Status_t{StatusCode: http.StatusUnauthorized}
 }
