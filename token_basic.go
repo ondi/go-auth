@@ -63,13 +63,13 @@ func (self *FindBasic_t) Find(r *http.Request) (out []Token) {
 	for _, v := range self.keys {
 		for _, token = range r.Header[v] {
 			if ix = strings.IndexByte(token, ' '); ix > -1 && strings.EqualFold(token[:ix], BASIC) {
-				out = append(out, self.Create(BASIC, []byte(token[ix+1:])))
+				out = append(out, self.Create(v, []byte(token[ix+1:])))
 			}
 		}
 		if c, err := r.Cookie(v); err == nil {
 			if token, err = url.QueryUnescape(c.Value); err == nil {
 				if ix = strings.IndexByte(token, ' '); ix > -1 && strings.EqualFold(token[:ix], BASIC) {
-					out = append(out, self.Create(BASIC, []byte(token[ix+1:])))
+					out = append(out, self.Create(v, []byte(token[ix+1:])))
 				}
 			}
 		}
