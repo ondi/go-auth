@@ -95,7 +95,7 @@ func (self *FindBearer_t) Find(r *http.Request) (out []Token) {
 		}
 	}
 	for _, v := range r.URL.Query()["bearer"] {
-		out = append(out, self.Create(BEARER, []byte(v)))
+		out = append(out, self.Create("bearer", []byte(v)))
 	}
 	return
 }

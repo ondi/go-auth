@@ -75,7 +75,7 @@ func (self *FindBasic_t) Find(r *http.Request) (out []Token) {
 		}
 	}
 	for _, v := range r.URL.Query()["basic"] {
-		out = append(out, self.Create(BASIC, []byte(v)))
+		out = append(out, self.Create("basic", []byte(v)))
 	}
 	return
 }
