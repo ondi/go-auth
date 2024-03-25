@@ -84,7 +84,7 @@ func (self *ParseBearer_t) Verify(path string, in []byte) (payload []byte, err e
 			return
 		}
 	}
-	return payload, VERIFY_ERROR
+	return payload, ERROR_VERIFY
 }
 
 func (self *ParseBearer_t) Approve(path string, found []Token) (ok bool) {

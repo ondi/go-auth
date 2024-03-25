@@ -117,20 +117,20 @@ func (self *Exp_t) Validate(ts time.Time, token *TokenBearer_t) error {
 	temp, ok := token.Body["nbf"]
 	if ok {
 		if test, ok = temp.(float64); !ok {
-			return VALIDATE_ERROR
+			return ERROR_FORMAT_NBF
 		}
 		if ok = ts.Unix() >= int64(test)+self.Nbf; !ok {
-			return VALIDATE_ERROR
+			return ERROR_NBF
 		}
 	}
 	// expire
 	temp, ok = token.Body["exp"]
 	if ok {
 		if test, ok = temp.(float64); !ok {
-			return VALIDATE_ERROR
+			return ERROR_FORMAT_EXP
 		}
 		if ok = ts.Unix() < int64(test)+self.Exp; !ok {
-			return VALIDATE_ERROR
+			return ERROR_EXP
 		}
 	}
 	return nil

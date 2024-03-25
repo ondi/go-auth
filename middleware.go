@@ -19,9 +19,12 @@ const (
 
 var (
 	// &auth used for context.Value key
-	auth           = 1
-	VERIFY_ERROR   = errors.New("verify failed")
-	VALIDATE_ERROR = errors.New("validate failed")
+	auth             = 1
+	ERROR_VERIFY     = errors.New("parse/verify failed")
+	ERROR_FORMAT_NBF = errors.New("nbf format")
+	ERROR_FORMAT_EXP = errors.New("exp format")
+	ERROR_NBF        = errors.New("nbf")
+	ERROR_EXP        = errors.New("exp")
 )
 
 type Token interface {

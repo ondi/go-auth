@@ -40,7 +40,7 @@ func (self *ParseBasic_t) Verify(path string, in []byte) (payload []byte, err er
 	if ok && re != nil && re.Match(in) {
 		return in, nil
 	}
-	return in, VERIFY_ERROR
+	return in, ERROR_VERIFY
 }
 
 func (self *ParseBasic_t) Approve(path string, found []Token) (ok bool) {
