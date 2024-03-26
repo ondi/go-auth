@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -51,6 +52,25 @@ type Parser interface {
 type Found_t struct {
 	Passed []Token
 	Failed []Token
+}
+
+type KeyPrefix_t struct {
+	Key    string
+	Prefix string
+}
+
+func HasPrefix(in string, prefix string) bool {
+	if len(in) < len(prefix) {
+		return false
+	}
+	return strings.EqualFold(in[:len(prefix)], prefix)
+}
+
+func NextSymbol(prefix string) (res int) {
+	if res = len(prefix); res > 0 {
+		return res + 1
+	}
+	return 0
 }
 
 func Found(ctx context.Context) (res Found_t) {

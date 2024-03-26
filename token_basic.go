@@ -7,7 +7,6 @@ package auth
 import (
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 )
 
@@ -47,29 +46,28 @@ func (self *TokenBasic_t) Validate(ts time.Time, payload []byte, verify_error er
 
 type FindBasic_t struct {
 	*TokenBasic_t
-	keys []string
+	keys []KeyPrefix_t
 }
 
-func NewFindBasic(basic *TokenBasic_t, extra_keys ...string) *FindBasic_t {
+func NewFindBasic(basic *TokenBasic_t, extra_keys ...KeyPrefix_t) *FindBasic_t {
 	return &FindBasic_t{
 		TokenBasic_t: basic,
-		keys:         append([]string{HEADER}, extra_keys...),
+		keys:         append([]KeyPrefix_t{{Key: HEADER, Prefix: BASIC}}, extra_keys...),
 	}
 }
 
 func (self *FindBasic_t) Find(r *http.Request) (out []Token) {
-	var ix int
 	var token string
 	for _, v := range self.keys {
-		for _, token = range r.Header[v] {
-			if ix = strings.IndexByte(token, ' '); ix > -1 && strings.EqualFold(token[:ix], BASIC) {
-				out = append(out, self.Create(v, []byte(token[ix+1:])))
+		for _, token = range r.Header[v.Key] {
+			if HasPrefix(token, v.Prefix) {
+				out = append(out, self.Create(v.Key, []byte(token[NextSymbol(v.Prefix):])))
 			}
 		}
-		if c, err := r.Cookie(v); err == nil {
+		if c, err := r.Cookie(v.Key); err == nil {
 			if token, err = url.QueryUnescape(c.Value); err == nil {
-				if ix = strings.IndexByte(token, ' '); ix > -1 && strings.EqualFold(token[:ix], BASIC) {
-					out = append(out, self.Create(v, []byte(token[ix+1:])))
+				if HasPrefix(token, v.Prefix) {
+					out = append(out, self.Create(v.Key, []byte(token[NextSymbol(v.Prefix):])))
 				}
 			}
 		}
