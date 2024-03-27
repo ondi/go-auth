@@ -57,17 +57,18 @@ func NewFindBasic(basic *TokenBasic_t, extra_keys ...KeyPrefix_t) *FindBasic_t {
 }
 
 func (self *FindBasic_t) Find(r *http.Request) (out []Token) {
+	var ix int
 	var token string
 	for _, v := range self.keys {
 		for _, token = range r.Header[v.Key] {
-			if HasPrefix(token, v.Prefix) {
-				out = append(out, self.Create(v.Key, []byte(token[NextSymbol(v.Prefix):])))
+			if ix = HasPrefix(token, v.Prefix); ix > -1 {
+				out = append(out, self.Create(v.Key, []byte(token[ix:])))
 			}
 		}
 		if c, err := r.Cookie(v.Key); err == nil {
 			if token, err = url.QueryUnescape(c.Value); err == nil {
-				if HasPrefix(token, v.Prefix) {
-					out = append(out, self.Create(v.Key, []byte(token[NextSymbol(v.Prefix):])))
+				if ix = HasPrefix(token, v.Prefix); ix > -1 {
+					out = append(out, self.Create(v.Key, []byte(token[ix:])))
 				}
 			}
 		}

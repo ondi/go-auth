@@ -55,14 +55,13 @@ type KeyPrefix_t struct {
 	Prefix string
 }
 
-func HasPrefix(in string, prefix string) bool {
+func HasPrefix(in string, prefix string) (res int) {
 	if len(in) < len(prefix) {
-		return false
+		return -1
 	}
-	return strings.EqualFold(in[:len(prefix)], prefix)
-}
-
-func NextSymbol(prefix string) (res int) {
+	if strings.EqualFold(in[:len(prefix)], prefix) == false {
+		return -1
+	}
 	if res = len(prefix); res > 0 {
 		return res + 1
 	}
