@@ -13,7 +13,7 @@ import (
 type TokenBasic_t struct {
 	Name  string
 	Value []byte
-	Err   error
+	Error error
 }
 
 func NewTokenBasic() *TokenBasic_t {
@@ -36,12 +36,12 @@ func (self *TokenBasic_t) GetValue() []byte {
 }
 
 func (self *TokenBasic_t) GetError() error {
-	return self.Err
+	return self.Error
 }
 
 func (self *TokenBasic_t) Validate(ts time.Time, payload []byte, verify_error error) error {
-	self.Err = verify_error
-	return self.Err
+	self.Error = verify_error
+	return self.Error
 }
 
 type FindBasic_t struct {
