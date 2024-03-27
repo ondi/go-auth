@@ -12,11 +12,7 @@ import (
 	"time"
 )
 
-const (
-	BASIC  = "Basic"
-	BEARER = "Bearer"
-	HEADER = "Authorization"
-)
+const HEADER = "Authorization"
 
 var (
 	// &auth used for context.Value key

@@ -52,7 +52,7 @@ type FindBasic_t struct {
 func NewFindBasic(basic *TokenBasic_t, extra_keys ...KeyPrefix_t) *FindBasic_t {
 	return &FindBasic_t{
 		TokenBasic_t: basic,
-		keys:         append([]KeyPrefix_t{{Key: HEADER, Prefix: BASIC}}, extra_keys...),
+		keys:         append([]KeyPrefix_t{{Key: HEADER, Prefix: "Basic"}}, extra_keys...),
 	}
 }
 

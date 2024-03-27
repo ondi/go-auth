@@ -72,7 +72,7 @@ type FindBearer_t struct {
 func NewFindBearer(bearer *TokenBearer_t, extra_keys ...KeyPrefix_t) *FindBearer_t {
 	return &FindBearer_t{
 		TokenBearer_t: bearer,
-		keys:          append([]KeyPrefix_t{{Key: HEADER, Prefix: BEARER}}, extra_keys...),
+		keys:          append([]KeyPrefix_t{{Key: HEADER, Prefix: "Bearer"}}, extra_keys...),
 	}
 }
 
