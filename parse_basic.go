@@ -11,13 +11,13 @@ import (
 )
 
 type ParseBasic_t struct {
-	passwords *tst.Tree1_t[*regexp.Regexp]
+	passwords *tst.Tree3_t[*regexp.Regexp]
 	required  int
 }
 
 func NewParseBasic(required int, passwords map[string]string) (self *ParseBasic_t, err error) {
 	self = &ParseBasic_t{
-		passwords: &tst.Tree1_t[*regexp.Regexp]{},
+		passwords: tst.NewTree3[*regexp.Regexp](),
 		required:  required,
 	}
 
