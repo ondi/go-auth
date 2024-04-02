@@ -11,46 +11,41 @@ import (
 )
 
 type ParseBasic_t struct {
-	passwords *tst.Tree3_t[*regexp.Regexp]
-	required  int
+	required *tst.Tree3_t[*regexp.Regexp]
 }
 
-func NewParseBasic(required int, passwords map[string]string) (self *ParseBasic_t, err error) {
+func NewParseBasic(required map[string]string) (self *ParseBasic_t, err error) {
 	self = &ParseBasic_t{
-		passwords: tst.NewTree3[*regexp.Regexp](),
-		required:  required,
+		required: tst.NewTree3[*regexp.Regexp](),
 	}
 
 	var re *regexp.Regexp
-	for k, v := range passwords {
+	for k, v := range required {
 		if len(v) > 0 {
 			if re, err = regexp.Compile(v); err != nil {
 				return
 			}
-			self.passwords.Add(k, re)
+			self.required.Add(k, re)
 		} else {
-			self.passwords.Add(k, nil)
+			self.required.Add(k, nil)
 		}
 	}
 	return
 }
 
 func (self *ParseBasic_t) Verify(path string, in []byte) (payload []byte, err error) {
-	re, ok := self.passwords.Search(path)
+	re, ok := self.required.Search(path)
 	if ok && re != nil && re.Match(in) {
 		return in, nil
 	}
 	return in, ERROR_VERIFY
 }
 
-func (self *ParseBasic_t) Approve(path string, found []Token) (ok bool) {
-	if len(found) >= self.required {
+func (self *ParseBasic_t) Approve(path string, found []Token) bool {
+	// page has no password, no token provided
+	req, ok := self.required.Search(path)
+	if len(found) > 0 || (ok && req == nil) {
 		return true
 	}
-	// page has no password, token not provided
-	re, ok := self.passwords.Search(path)
-	if ok {
-		return re == nil
-	}
-	return
+	return false
 }

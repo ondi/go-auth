@@ -9,11 +9,12 @@ import (
 	"strings"
 
 	"github.com/ondi/go-jwt"
+	"github.com/ondi/go-tst"
 )
 
 type ParseBearer_t struct {
 	verify   []jwt.Verifier
-	required int
+	required *tst.Tree3_t[int]
 }
 
 func KeysGlob(pattern string, in []Key_t) ([]Key_t, error) {
@@ -31,10 +32,15 @@ func KeysGlob(pattern string, in []Key_t) ([]Key_t, error) {
 	return in, err
 }
 
-func NewParseBearer(required int, keys []Key_t) (res *ParseBearer_t, err error) {
-	res = &ParseBearer_t{
-		required: required,
+func NewParseBearer(keys []Key_t, required map[string]int) (self *ParseBearer_t, err error) {
+	self = &ParseBearer_t{
+		required: tst.NewTree3[int](),
 	}
+
+	for k, v := range required {
+		self.required.Add(k, v)
+	}
+
 	var verify jwt.Verifier
 	for _, key := range keys {
 		if key.Hmac {
@@ -55,7 +61,7 @@ func NewParseBearer(required int, keys []Key_t) (res *ParseBearer_t, err error) 
 		if err != nil {
 			return
 		}
-		res.verify = append(res.verify, verify)
+		self.verify = append(self.verify, verify)
 	}
 	return
 }
@@ -87,9 +93,10 @@ func (self *ParseBearer_t) Verify(path string, in []byte) (payload []byte, err e
 	return payload, ERROR_VERIFY
 }
 
-func (self *ParseBearer_t) Approve(path string, found []Token) (ok bool) {
-	if len(found) >= self.required {
+func (self *ParseBearer_t) Approve(path string, found []Token) bool {
+	req, _ := self.required.Search(path)
+	if len(found) >= req {
 		return true
 	}
-	return
+	return false
 }
