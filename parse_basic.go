@@ -42,7 +42,7 @@ func (self *ParseBasic_t) Verify(path string, in []byte) (payload []byte, err er
 }
 
 func (self *ParseBasic_t) Approve(path string, found []Token) bool {
-	// page has no password, no token provided
+	// approve no password pages
 	req, ok := self.required.Search(path)
 	if len(found) > 0 || (ok && req == nil) {
 		return true

@@ -11,10 +11,10 @@ import (
 )
 
 func Test001(t *testing.T) {
-	parse_bearer, err := NewParseBearer(nil, nil)
+	parse_bearer, err := NewParseBearer(nil, map[string]int{"/": 1})
 	assert.NilError(t, err)
 
-	parse_basic, err := NewParseBasic(nil)
+	parse_basic, err := NewParseBasic(map[string]string{"/": "base64basic"})
 	assert.NilError(t, err)
 
 	bearer := NewAuth(nil, nil, parse_bearer, NewFindBearer(NewTokenBearer(NewExp(-60, 60))))
