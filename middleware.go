@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 )
 
 const HEADER = "Authorization"
@@ -62,10 +64,14 @@ func HasPrefix(in string, prefix string) (res int) {
 	if strings.EqualFold(in[:len(prefix)], prefix) == false {
 		return -1
 	}
-	if res = len(prefix); res > 0 {
-		return res + 1
+	for {
+		v, size := utf8.DecodeRuneInString(in[len(prefix)+res:])
+		if v == utf8.RuneError || unicode.IsSpace(v) == false {
+			break
+		}
+		res += size
 	}
-	return 0
+	return len(prefix) + res
 }
 
 func Found(ctx context.Context) (res Found_t) {
