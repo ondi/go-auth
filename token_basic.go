@@ -5,6 +5,7 @@
 package auth
 
 import (
+	"bytes"
 	"net/http"
 	"net/url"
 	"time"
@@ -40,9 +41,15 @@ func (self *TokenBasic_t) GetError() error {
 }
 
 func (self *TokenBasic_t) Validate(ts time.Time, payload []byte, verify_error error) error {
-	self.Error = verify_error
-	self.Value = payload
-	return self.Error
+	if self.Error = verify_error; self.Error != nil {
+		return self.Error
+	}
+	if ix := bytes.IndexByte(payload, ':'); ix > -1 {
+		self.Value = payload[:ix]
+	} else {
+		self.Value = payload
+	}
+	return nil
 }
 
 type FindBasic_t struct {
