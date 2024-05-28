@@ -5,6 +5,7 @@
 package auth
 
 import (
+	"encoding/base64"
 	"regexp"
 
 	"github.com/ondi/go-tst"
@@ -34,17 +35,26 @@ func NewParseBasic(required map[string]string) (self *ParseBasic_t, err error) {
 }
 
 func (self *ParseBasic_t) Verify(path string, in []byte) (payload []byte, err error) {
+	payload = make([]byte, base64.URLEncoding.DecodedLen(len(in)))
+	n, err := base64.URLEncoding.Decode(payload, in)
+	if err != nil {
+		return
+	}
+	payload = payload[:n]
 	re, ok := self.required.Search(path)
 	if ok && re != nil && re.Match(in) {
-		return in, nil
+		return
 	}
-	return in, ERROR_VERIFY
+	err = ERROR_VERIFY
+	return
 }
 
 func (self *ParseBasic_t) Approve(path string, found []Token) bool {
+	if len(found) > 0 {
+		return true
+	}
 	// approve no password pages
-	req, ok := self.required.Search(path)
-	if len(found) > 0 || (ok && req == nil) {
+	if re, ok := self.required.Search(path); ok && re == nil {
 		return true
 	}
 	return false
