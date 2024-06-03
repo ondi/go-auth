@@ -108,8 +108,7 @@ func (self *ParseBearer_t) Approve(path string, found []Token) bool {
 		return ok
 	}
 	for _, v := range found {
-		match := re.MatchString(v.GetName())
-		if match {
+		if re.MatchString(v.GetName()) {
 			return true
 		}
 	}
