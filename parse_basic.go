@@ -41,21 +41,18 @@ func (self *ParseBasic_t) Verify(path string, in []byte) (payload []byte, err er
 		return
 	}
 	payload = payload[:n]
-	re, ok := self.required.Search(path)
-	if ok && re != nil && re.Match(in) {
-		return
-	}
-	err = ERROR_VERIFY
 	return
 }
 
 func (self *ParseBasic_t) Approve(path string, found []Token) bool {
-	if len(found) > 0 {
-		return true
+	re, ok := self.required.Search(path)
+	if re == nil {
+		return ok
 	}
-	// approve no password pages
-	if re, ok := self.required.Search(path); ok && re == nil {
-		return true
+	for _, v := range found {
+		if re.Match(v.GetValue()) {
+			return true
+		}
 	}
 	return false
 }

@@ -14,6 +14,7 @@ import (
 type TokenBasic_t struct {
 	Name  string
 	Value []byte
+	Body  []byte
 	Error error
 }
 
@@ -45,9 +46,9 @@ func (self *TokenBasic_t) Validate(ts time.Time, payload []byte, verify_error er
 		return self.Error
 	}
 	if ix := bytes.IndexByte(payload, ':'); ix > -1 {
-		self.Value = payload[:ix]
+		self.Body = payload[:ix]
 	} else {
-		self.Value = payload
+		self.Body = payload
 	}
 	return nil
 }
@@ -82,7 +83,7 @@ func (self *FindBasic_t) Find(r *http.Request) (out []Token) {
 		}
 	}
 	for _, v := range r.URL.Query()["basic"] {
-		out = append(out, self.Create("basic", []byte(v)))
+		out = append(out, self.Create(HEADER, []byte(v)))
 	}
 	return
 }

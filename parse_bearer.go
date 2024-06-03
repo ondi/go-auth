@@ -6,6 +6,7 @@ package auth
 
 import (
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/ondi/go-jwt"
@@ -14,7 +15,7 @@ import (
 
 type ParseBearer_t struct {
 	verify   []jwt.Verifier
-	required *tst.Tree3_t[int]
+	required *tst.Tree3_t[*regexp.Regexp]
 }
 
 func KeysGlob(pattern string, in []Key_t) ([]Key_t, error) {
@@ -32,13 +33,21 @@ func KeysGlob(pattern string, in []Key_t) ([]Key_t, error) {
 	return in, err
 }
 
-func NewParseBearer(keys []Key_t, required map[string]int) (self *ParseBearer_t, err error) {
+func NewParseBearer(keys []Key_t, required map[string]string) (self *ParseBearer_t, err error) {
 	self = &ParseBearer_t{
-		required: tst.NewTree3[int](),
+		required: tst.NewTree3[*regexp.Regexp](),
 	}
 
+	var re *regexp.Regexp
 	for k, v := range required {
-		self.required.Add(k, v)
+		if len(v) > 0 {
+			if re, err = regexp.Compile(v); err != nil {
+				return
+			}
+			self.required.Add(k, re)
+		} else {
+			self.required.Add(k, nil)
+		}
 	}
 
 	var verify jwt.Verifier
@@ -94,9 +103,15 @@ func (self *ParseBearer_t) Verify(path string, in []byte) (payload []byte, err e
 }
 
 func (self *ParseBearer_t) Approve(path string, found []Token) bool {
-	req, _ := self.required.Search(path)
-	if len(found) >= req {
-		return true
+	re, ok := self.required.Search(path)
+	if re == nil {
+		return ok
+	}
+	for _, v := range found {
+		match := re.MatchString(v.GetName())
+		if match {
+			return true
+		}
 	}
 	return false
 }
