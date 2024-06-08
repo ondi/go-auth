@@ -6,8 +6,6 @@ package auth
 
 import (
 	"encoding/json"
-	"net/http"
-	"net/url"
 	"time"
 )
 
@@ -62,41 +60,6 @@ func (self *TokenBearer_t) Validate(ts time.Time, payload []byte, verify_error e
 		}
 	}
 	return nil
-}
-
-type FindBearer_t struct {
-	*TokenBearer_t
-	keys []KeyPrefix_t
-}
-
-func NewFindBearer(bearer *TokenBearer_t, extra_keys ...KeyPrefix_t) *FindBearer_t {
-	return &FindBearer_t{
-		TokenBearer_t: bearer,
-		keys:          append([]KeyPrefix_t{{Key: HEADER, Prefix: "Bearer"}}, extra_keys...),
-	}
-}
-
-func (self *FindBearer_t) Find(r *http.Request) (out []Token) {
-	var ix int
-	var token string
-	for _, v := range self.keys {
-		for _, token = range r.Header[v.Key] {
-			if ix = HasPrefix(token, v.Prefix); ix > -1 {
-				out = append(out, self.Create(v.Key, []byte(token[ix:])))
-			}
-		}
-		if c, err := r.Cookie(v.Key); err == nil {
-			if token, err = url.QueryUnescape(c.Value); err == nil {
-				if ix = HasPrefix(token, v.Prefix); ix > -1 {
-					out = append(out, self.Create(v.Key, []byte(token[ix:])))
-				}
-			}
-		}
-	}
-	for _, v := range r.URL.Query()["bearer"] {
-		out = append(out, self.Create(HEADER, []byte(v)))
-	}
-	return
 }
 
 type Exp_t struct {

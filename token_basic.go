@@ -6,8 +6,6 @@ package auth
 
 import (
 	"bytes"
-	"net/http"
-	"net/url"
 	"time"
 )
 
@@ -51,39 +49,4 @@ func (self *TokenBasic_t) Validate(ts time.Time, payload []byte, verify_error er
 		self.Body = payload
 	}
 	return nil
-}
-
-type FindBasic_t struct {
-	*TokenBasic_t
-	keys []KeyPrefix_t
-}
-
-func NewFindBasic(basic *TokenBasic_t, extra_keys ...KeyPrefix_t) *FindBasic_t {
-	return &FindBasic_t{
-		TokenBasic_t: basic,
-		keys:         append([]KeyPrefix_t{{Key: HEADER, Prefix: "Basic"}}, extra_keys...),
-	}
-}
-
-func (self *FindBasic_t) Find(r *http.Request) (out []Token) {
-	var ix int
-	var token string
-	for _, v := range self.keys {
-		for _, token = range r.Header[v.Key] {
-			if ix = HasPrefix(token, v.Prefix); ix > -1 {
-				out = append(out, self.Create(v.Key, []byte(token[ix:])))
-			}
-		}
-		if c, err := r.Cookie(v.Key); err == nil {
-			if token, err = url.QueryUnescape(c.Value); err == nil {
-				if ix = HasPrefix(token, v.Prefix); ix > -1 {
-					out = append(out, self.Create(v.Key, []byte(token[ix:])))
-				}
-			}
-		}
-	}
-	for _, v := range r.URL.Query()["basic"] {
-		out = append(out, self.Create(HEADER, []byte(v)))
-	}
-	return
 }

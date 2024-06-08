@@ -24,6 +24,8 @@ var (
 	ERROR_FORMAT_EXP = errors.New("exp format")
 	ERROR_NBF        = errors.New("nbf")
 	ERROR_EXP        = errors.New("exp")
+	KEY_BEARER       = KeyPrefix_t{Key: HEADER, Prefix: "Bearer"}
+	KEY_BASIC        = KeyPrefix_t{Key: HEADER, Prefix: "Basic"}
 )
 
 type Token interface {
@@ -33,12 +35,11 @@ type Token interface {
 	Validate(ts time.Time, payload []byte, verify_error error) error
 }
 
-type CreateToken interface {
+type TokenCreate interface {
 	Create(name string, value []byte) Token
 }
 
-type FindToken interface {
-	CreateToken
+type TokenFind interface {
 	Find(r *http.Request) []Token
 }
 
@@ -80,15 +81,15 @@ func Found(ctx context.Context) (res Found_t) {
 }
 
 type Auth_t struct {
-	token       []FindToken
+	find        []TokenFind
 	parser      Parser
 	next_passed http.Handler
 	next_failed http.Handler
 }
 
-func NewAuth(next_passed http.Handler, next_failed http.Handler, parser Parser, token ...FindToken) (self *Auth_t) {
+func NewAuth(next_passed http.Handler, next_failed http.Handler, parser Parser, find ...TokenFind) (self *Auth_t) {
 	self = &Auth_t{
-		token:       token,
+		find:        find,
 		parser:      parser,
 		next_passed: next_passed,
 		next_failed: next_failed,
@@ -99,7 +100,7 @@ func NewAuth(next_passed http.Handler, next_failed http.Handler, parser Parser, 
 func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ts := time.Now()
 	found, _ := r.Context().Value(&auth).(Found_t)
-	for _, v1 := range self.token {
+	for _, v1 := range self.find {
 		for _, v2 := range v1.Find(r) {
 			if payload, err := self.parser.Verify(r.URL.Path, v2.GetValue()); v2.Validate(ts, payload, err) == nil {
 				found.Passed = append(found.Passed, v2)
