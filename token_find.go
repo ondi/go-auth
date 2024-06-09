@@ -7,12 +7,7 @@ package auth
 import (
 	"net/http"
 	"net/url"
-	"time"
 )
-
-type Validator interface {
-	Validate(ts time.Time, token *TokenBearer_t) error
-}
 
 type TokenFind_t struct {
 	create TokenCreate

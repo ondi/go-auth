@@ -9,15 +9,19 @@ import (
 	"time"
 )
 
+type BasicValidator interface {
+	ValidateBasic(ts time.Time, token *TokenBasic_t) error
+}
+
 type TokenBasic_t struct {
 	Name       string
 	Value      []byte
 	Body       []byte
 	Error      error
-	validators []Validator
+	validators []BasicValidator
 }
 
-func NewTokenBasic(validators ...Validator) *TokenBasic_t {
+func NewTokenBasic(validators ...BasicValidator) *TokenBasic_t {
 	return &TokenBasic_t{
 		validators: validators,
 	}
@@ -51,6 +55,11 @@ func (self *TokenBasic_t) Validate(ts time.Time, payload []byte, verify_error er
 		self.Body = payload[:ix]
 	} else {
 		self.Body = payload
+	}
+	for _, v := range self.validators {
+		if self.Error = v.ValidateBasic(ts, self); self.Error != nil {
+			return self.Error
+		}
 	}
 	return nil
 }
