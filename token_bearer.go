@@ -9,10 +9,6 @@ import (
 	"time"
 )
 
-type Validator interface {
-	Validate(ts time.Time, token *TokenBearer_t) error
-}
-
 type TokenBearer_t struct {
 	Name       string
 	Value      []byte

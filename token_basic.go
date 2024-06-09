@@ -10,20 +10,24 @@ import (
 )
 
 type TokenBasic_t struct {
-	Name  string
-	Value []byte
-	Body  []byte
-	Error error
+	Name       string
+	Value      []byte
+	Body       []byte
+	Error      error
+	validators []Validator
 }
 
-func NewTokenBasic() *TokenBasic_t {
-	return &TokenBasic_t{}
+func NewTokenBasic(validators ...Validator) *TokenBasic_t {
+	return &TokenBasic_t{
+		validators: validators,
+	}
 }
 
 func (self *TokenBasic_t) Create(name string, value []byte) Token {
 	return &TokenBasic_t{
-		Name:  name,
-		Value: value,
+		Name:       name,
+		Value:      value,
+		validators: self.validators,
 	}
 }
 
