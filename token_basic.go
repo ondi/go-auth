@@ -10,7 +10,7 @@ import (
 )
 
 type BasicValidator interface {
-	ValidateBasic(ts time.Time, token *TokenBasic_t) error
+	ValidateBasic(path string, ts time.Time, token *TokenBasic_t) error
 }
 
 type TokenBasic_t struct {
@@ -47,7 +47,7 @@ func (self *TokenBasic_t) GetError() error {
 	return self.Error
 }
 
-func (self *TokenBasic_t) Validate(ts time.Time, payload []byte, verify_error error) error {
+func (self *TokenBasic_t) Validate(path string, ts time.Time, payload []byte, verify_error error) error {
 	if self.Error = verify_error; self.Error != nil {
 		return self.Error
 	}
@@ -57,7 +57,7 @@ func (self *TokenBasic_t) Validate(ts time.Time, payload []byte, verify_error er
 		self.Body = payload
 	}
 	for _, v := range self.validators {
-		if self.Error = v.ValidateBasic(ts, self); self.Error != nil {
+		if self.Error = v.ValidateBasic(path, ts, self); self.Error != nil {
 			return self.Error
 		}
 	}
