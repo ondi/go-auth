@@ -34,7 +34,7 @@ func NewParseBasic(required map[string]string) (self *ParseBasic_t, err error) {
 	return
 }
 
-func (self *ParseBasic_t) Verify(path string, in []byte) (payload []byte, err error) {
+func (self *ParseBasic_t) Verify(in []byte) (payload []byte, err error) {
 	payload = make([]byte, base64.URLEncoding.DecodedLen(len(in)))
 	n, err := base64.URLEncoding.Decode(payload, in)
 	if err != nil {
