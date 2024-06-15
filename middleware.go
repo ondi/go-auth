@@ -59,20 +59,18 @@ type KeyPrefix_t struct {
 }
 
 func HasPrefix(in string, prefix string) (res int) {
-	if len(in) < len(prefix) {
-		return -1
-	}
-	if strings.EqualFold(in[:len(prefix)], prefix) == false {
+	res = len(prefix)
+	if len(in) < res || strings.EqualFold(in[:res], prefix) == false {
 		return -1
 	}
 	for {
-		v, size := utf8.DecodeRuneInString(in[len(prefix)+res:])
-		if v == utf8.RuneError || unicode.IsSpace(v) == false {
+		v, size := utf8.DecodeRuneInString(in[res:])
+		if unicode.IsSpace(v) == false {
 			break
 		}
 		res += size
 	}
-	return len(prefix) + res
+	return
 }
 
 func Found(ctx context.Context) (res Found_t) {
