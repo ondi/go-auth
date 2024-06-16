@@ -47,19 +47,20 @@ func (self *TokenBasic_t) GetError() error {
 	return self.Error
 }
 
-func (self *TokenBasic_t) Validate(path string, ts time.Time, payload []byte, verify_error error) error {
-	if self.Error = verify_error; self.Error != nil {
-		return self.Error
-	}
+func (self *TokenBasic_t) SetError(in error) {
+	self.Error = in
+}
+
+func (self *TokenBasic_t) Validate(path string, ts time.Time, payload []byte) (err error) {
 	if ix := bytes.IndexByte(payload, ':'); ix > -1 {
 		self.Body = payload[:ix]
 	} else {
 		self.Body = payload
 	}
 	for _, v := range self.validators {
-		if self.Error = v.ValidateBasic(path, ts, self); self.Error != nil {
-			return self.Error
+		if err = v.ValidateBasic(path, ts, self); err != nil {
+			return
 		}
 	}
-	return nil
+	return
 }

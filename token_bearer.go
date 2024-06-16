@@ -47,19 +47,20 @@ func (self *TokenBearer_t) GetError() error {
 	return self.Error
 }
 
-func (self *TokenBearer_t) Validate(path string, ts time.Time, payload []byte, verify_error error) error {
-	if self.Error = verify_error; self.Error != nil {
-		return self.Error
-	}
-	if self.Error = json.Unmarshal(payload, &self.Body); self.Error != nil {
-		return self.Error
+func (self *TokenBearer_t) SetError(in error) {
+	self.Error = in
+}
+
+func (self *TokenBearer_t) Validate(path string, ts time.Time, payload []byte) (err error) {
+	if err = json.Unmarshal(payload, &self.Body); err != nil {
+		return
 	}
 	for _, v := range self.validators {
-		if self.Error = v.ValidateBearer(path, ts, self); self.Error != nil {
-			return self.Error
+		if err = v.ValidateBearer(path, ts, self); err != nil {
+			return
 		}
 	}
-	return nil
+	return
 }
 
 type Exp_t struct {
