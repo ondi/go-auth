@@ -52,6 +52,9 @@ func (self *TokenBearer_t) SetError(in error) {
 }
 
 func (self *TokenBearer_t) Validate(path string, ts time.Time, payload []byte) (err error) {
+	if self.Error != nil {
+		return
+	}
 	if err = json.Unmarshal(payload, &self.Body); err != nil {
 		return
 	}
