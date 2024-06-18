@@ -52,6 +52,9 @@ func (self *TokenBasic_t) SetError(in error) {
 }
 
 func (self *TokenBasic_t) Validate(path string, ts time.Time, payload []byte) (err error) {
+	if self.Error != nil {
+		return
+	}
 	if ix := bytes.IndexByte(payload, ':'); ix > -1 {
 		self.Body = payload[:ix]
 	} else {
