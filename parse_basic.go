@@ -12,47 +12,39 @@ import (
 )
 
 type ParseBasic_t struct {
-	required *tst.Tree3_t[*regexp.Regexp]
+	keys *tst.Tree3_t[*regexp.Regexp]
 }
 
-func NewParseBasic(required map[string]string) (self *ParseBasic_t, err error) {
+func NewParseBasic(keys map[string]string) (self *ParseBasic_t, err error) {
 	self = &ParseBasic_t{
-		required: tst.NewTree3[*regexp.Regexp](),
+		keys: tst.NewTree3[*regexp.Regexp](),
 	}
 
 	var re *regexp.Regexp
-	for k, v := range required {
-		if len(v) > 0 {
-			if re, err = regexp.Compile(v); err != nil {
-				return
-			}
-			self.required.Add(k, re)
-		} else {
-			self.required.Add(k, nil)
+	for k, v := range keys {
+		if re, err = regexp.Compile(v); err != nil {
+			return
 		}
+		self.keys.Add(k, re)
 	}
 	return
 }
 
-func (self *ParseBasic_t) Verify(in []byte) (payload []byte, err error) {
+func (self *ParseBasic_t) Verify(path string, in []byte) (payload []byte, err error) {
 	payload = make([]byte, base64.URLEncoding.DecodedLen(len(in)))
 	n, err := base64.URLEncoding.Decode(payload, in)
 	if err != nil {
 		return
 	}
 	payload = payload[:n]
+	verify, ok := self.keys.Search(path)
+	if ok && verify.Match(in) {
+		return
+	}
+	err = ERROR_VERIFY
 	return
 }
 
 func (self *ParseBasic_t) Approve(path string, found []Token) bool {
-	re, ok := self.required.Search(path)
-	if re == nil {
-		return ok
-	}
-	for _, v := range found {
-		if re.Match(v.GetValue()) {
-			return true
-		}
-	}
-	return false
+	return len(found) > 0
 }

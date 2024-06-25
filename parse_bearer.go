@@ -5,8 +5,6 @@
 package auth
 
 import (
-	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/ondi/go-jwt"
@@ -14,84 +12,50 @@ import (
 )
 
 type ParseBearer_t struct {
-	verify   []jwt.Verifier
-	required *tst.Tree3_t[*regexp.Regexp]
+	keys *tst.Tree3_t[[]jwt.Verifier]
 }
 
-func KeysGlob(pattern string, in []Key_t) ([]Key_t, error) {
-	matched, err := filepath.Glob(pattern)
-	if err != nil {
-		return in, err
-	}
-	var key Key_t
-	for _, v := range matched {
-		if key, err = ReadFile(v); err != nil {
-			return in, err
-		}
-		in = append(in, key)
-	}
-	return in, err
-}
-
-func NewParseBearer(keys []Key_t, required map[string]string) (self *ParseBearer_t, err error) {
+func NewParseBearer(keys map[string][]Key_t) (self *ParseBearer_t, err error) {
 	self = &ParseBearer_t{
-		required: tst.NewTree3[*regexp.Regexp](),
+		keys: tst.NewTree3[[]jwt.Verifier](),
 	}
 
-	var re *regexp.Regexp
-	for k, v := range required {
-		if len(v) > 0 {
-			if re, err = regexp.Compile(v); err != nil {
+	for k, v := range keys {
+		var keys []jwt.Verifier
+		var verify jwt.Verifier
+		for _, key := range v {
+			if key.Hmac {
+				verify, err = jwt.NewHmacKey(key.Value)
+			} else if key.Cert {
+				if key.DER {
+					verify, err = jwt.NewVerifyCertDer(key.Value)
+				} else {
+					verify, err = jwt.NewVerifyCertPem(key.Value)
+				}
+			} else {
+				if key.DER {
+					verify, err = jwt.NewVerifyKeyDer(key.Value)
+				} else {
+					verify, err = jwt.NewVerifyKeyPem(key.Value)
+				}
+			}
+			if err != nil {
 				return
 			}
-			self.required.Add(k, re)
-		} else {
-			self.required.Add(k, nil)
+			keys = append(keys, verify)
 		}
-	}
-
-	var verify jwt.Verifier
-	for _, key := range keys {
-		if key.Hmac {
-			verify, err = jwt.NewHmacKey(key.Value)
-		} else if key.Cert {
-			if key.DER {
-				verify, err = jwt.NewVerifyCertDer(key.Value)
-			} else {
-				verify, err = jwt.NewVerifyCertPem(key.Value)
-			}
-		} else {
-			if key.DER {
-				verify, err = jwt.NewVerifyKeyDer(key.Value)
-			} else {
-				verify, err = jwt.NewVerifyKeyPem(key.Value)
-			}
-		}
-		if err != nil {
-			return
-		}
-		self.verify = append(self.verify, verify)
+		self.keys.Add(k, keys)
 	}
 	return
 }
 
-func (self *ParseBearer_t) Len() int {
-	return len(self.verify)
-}
-
-func (self *ParseBearer_t) Names() (res []string) {
-	for _, v := range self.verify {
-		res = append(res, v.Name())
-	}
-	return
-}
-
-func (self *ParseBearer_t) Verify(in []byte) (payload []byte, err error) {
+func (self *ParseBearer_t) Verify(path string, in []byte) (payload []byte, err error) {
 	alg, bits, _, payload, signature, err := jwt.Parse(in)
 	if err != nil {
 		return
 	}
-	for _, v := range self.verify {
+	verify, _ := self.keys.Search(path)
+	for _, v := range verify {
 		if strings.HasPrefix(alg, v.Name()) == false {
 			continue
 		}
@@ -99,18 +63,10 @@ func (self *ParseBearer_t) Verify(in []byte) (payload []byte, err error) {
 			return
 		}
 	}
-	return payload, ERROR_VERIFY
+	err = ERROR_VERIFY
+	return
 }
 
 func (self *ParseBearer_t) Approve(path string, found []Token) bool {
-	re, ok := self.required.Search(path)
-	if re == nil {
-		return ok
-	}
-	for _, v := range found {
-		if re.MatchString(v.GetName()) {
-			return true
-		}
-	}
-	return false
+	return len(found) > 0
 }

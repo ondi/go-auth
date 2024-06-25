@@ -45,7 +45,7 @@ type TokenFind interface {
 }
 
 type Parser interface {
-	Verify(value []byte) (payload []byte, err error)
+	Verify(path string, value []byte) (payload []byte, err error)
 	Approve(path string, passed []Token) (ok bool)
 }
 
@@ -103,7 +103,7 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	found, _ := r.Context().Value(&auth).(Found_t)
 	for _, v1 := range self.find {
 		for _, v2 := range v1.Find(r) {
-			if payload, err = self.parser.Verify(v2.GetValue()); err != nil {
+			if payload, err = self.parser.Verify(r.URL.Path, v2.GetValue()); err != nil {
 				v2.SetError(err)
 			}
 			if err = v2.Validate(r.URL.Path, ts, payload); err != nil {

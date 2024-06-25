@@ -11,7 +11,7 @@ import (
 )
 
 func Test001(t *testing.T) {
-	parse_bearer, err := NewParseBearer(nil, map[string]string{"/": HEADER})
+	parse_bearer, err := NewParseBearer(map[string][]Key_t{"/": nil})
 	assert.NilError(t, err)
 
 	parse_basic, err := NewParseBasic(map[string]string{"/": "base64basic"})
