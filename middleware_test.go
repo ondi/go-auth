@@ -14,7 +14,7 @@ func Test001(t *testing.T) {
 	parse_bearer, err := NewParseBearer(map[string][]Key_t{"/": nil})
 	assert.NilError(t, err)
 
-	parse_basic, err := NewParseBasic(map[string]string{"/": "base64basic"})
+	parse_basic, err := NewParseBasic(map[string][]string{"/": nil})
 	assert.NilError(t, err)
 
 	bearer := NewAuth(nil, nil, parse_bearer, NewTokenFind(NewTokenBearer(NewExp(-60, 60)), KEY_BEARER))

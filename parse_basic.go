@@ -6,26 +6,25 @@ package auth
 
 import (
 	"encoding/base64"
-	"regexp"
 
 	"github.com/ondi/go-tst"
 )
 
 type ParseBasic_t struct {
-	keys *tst.Tree3_t[*regexp.Regexp]
+	keys *tst.Tree3_t[map[string]struct{}]
 }
 
-func NewParseBasic(keys map[string]string) (self *ParseBasic_t, err error) {
+func NewParseBasic(keys map[string][]string) (self *ParseBasic_t, err error) {
 	self = &ParseBasic_t{
-		keys: tst.NewTree3[*regexp.Regexp](),
+		keys: tst.NewTree3[map[string]struct{}](),
 	}
 
-	var re *regexp.Regexp
-	for k, v := range keys {
-		if re, err = regexp.Compile(v); err != nil {
-			return
+	for k1, v1 := range keys {
+		m := map[string]struct{}{}
+		for _, v2 := range v1 {
+			m[v2] = struct{}{}
 		}
-		self.keys.Add(k, re)
+		self.keys.Add(k1, m)
 	}
 	return
 }
@@ -37,8 +36,8 @@ func (self *ParseBasic_t) Verify(path string, in []byte) (payload []byte, err er
 		return
 	}
 	payload = payload[:n]
-	verify, ok := self.keys.Search(path)
-	if ok && verify.Match(in) {
+	verify, _ := self.keys.Search(path)
+	if _, ok := verify[string(in)]; ok {
 		return
 	}
 	err = ERROR_VERIFY
