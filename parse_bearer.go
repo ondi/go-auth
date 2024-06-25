@@ -5,6 +5,7 @@
 package auth
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/ondi/go-jwt"
@@ -12,12 +13,17 @@ import (
 )
 
 type ParseBearer_t struct {
-	keys *tst.Tree3_t[[]jwt.Verifier]
+	keys         *tst.Tree3_t[[]jwt.Verifier]
+	require_name *regexp.Regexp
 }
 
-func NewParseBearer(keys map[string][]Key_t) (self *ParseBearer_t, err error) {
+func NewParseBearer(keys map[string][]Key_t, require_name string) (self *ParseBearer_t, err error) {
 	self = &ParseBearer_t{
 		keys: tst.NewTree3[[]jwt.Verifier](),
+	}
+
+	if self.require_name, err = regexp.Compile(require_name); err != nil {
+		return
 	}
 
 	for k, v := range keys {
@@ -68,5 +74,10 @@ func (self *ParseBearer_t) Verify(path string, in []byte) (payload []byte, err e
 }
 
 func (self *ParseBearer_t) Approve(path string, found []Token) bool {
-	return len(found) > 0
+	for _, v := range found {
+		if self.require_name.MatchString(v.GetName()) {
+			return true
+		}
+	}
+	return false
 }

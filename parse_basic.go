@@ -6,17 +6,23 @@ package auth
 
 import (
 	"encoding/base64"
+	"regexp"
 
 	"github.com/ondi/go-tst"
 )
 
 type ParseBasic_t struct {
-	keys *tst.Tree3_t[map[string]struct{}]
+	keys         *tst.Tree3_t[map[string]struct{}]
+	require_name *regexp.Regexp
 }
 
-func NewParseBasic(keys map[string][]string) (self *ParseBasic_t, err error) {
+func NewParseBasic(keys map[string][]string, require_name string) (self *ParseBasic_t, err error) {
 	self = &ParseBasic_t{
 		keys: tst.NewTree3[map[string]struct{}](),
+	}
+
+	if self.require_name, err = regexp.Compile(require_name); err != nil {
+		return
 	}
 
 	for k1, v1 := range keys {
