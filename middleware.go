@@ -12,6 +12,8 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/ondi/go-tst"
 )
 
 const HEADER = "Authorization"
@@ -137,4 +139,30 @@ func NewStatus(StatusCode int) *Status_t {
 
 func NewStatus401() *Status_t {
 	return &Status_t{StatusCode: http.StatusUnauthorized}
+}
+
+type AuthNone_t struct {
+	passed http.Handler
+	failed http.Handler
+	allow  *tst.Tree3_t[struct{}]
+}
+
+func NewAuthNone(passed http.Handler, failed http.Handler, allow []string) (self *AuthNone_t) {
+	self = &AuthNone_t{
+		passed: passed,
+		failed: failed,
+		allow:  tst.NewTree3[struct{}](),
+	}
+	for _, v := range allow {
+		self.allow.Add(v, struct{}{})
+	}
+	return
+}
+
+func (self *AuthNone_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if _, ok := self.allow.Search(r.URL.Path); ok {
+		self.passed.ServeHTTP(w, r)
+	} else {
+		self.failed.ServeHTTP(w, r)
+	}
 }
