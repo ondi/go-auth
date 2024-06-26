@@ -13,6 +13,13 @@ import (
 	"github.com/ondi/go-jwt"
 )
 
+type Key_t struct {
+	Value []byte
+	DER   bool // default PEM
+	Hmac  bool
+	Cert  bool
+}
+
 func ReadFile(in string) (out Key_t, err error) {
 	if out.Value, err = os.ReadFile(in); err != nil {
 		return
@@ -42,13 +49,6 @@ func AppendKeysGlob(in []Key_t, pattern string) ([]Key_t, error) {
 		in = append(in, key)
 	}
 	return in, err
-}
-
-type Key_t struct {
-	Value []byte
-	DER   bool // default PEM
-	Hmac  bool
-	Cert  bool
 }
 
 type Signer interface {

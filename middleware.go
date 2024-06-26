@@ -111,10 +111,10 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if err = v2.Validate(r.URL.Path, ts, payload); err != nil {
 				v2.SetError(err)
 			}
-			if v2.GetError() == nil {
-				found.Passed = append(found.Passed, v2)
-			} else {
+			if v2.GetError() != nil {
 				found.Failed = append(found.Failed, v2)
+			} else {
+				found.Passed = append(found.Passed, v2)
 			}
 		}
 	}

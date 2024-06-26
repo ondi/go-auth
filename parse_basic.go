@@ -12,16 +12,16 @@ import (
 )
 
 type ParseBasic_t struct {
-	keys         *tst.Tree3_t[map[string]struct{}]
-	require_name *regexp.Regexp
+	keys    *tst.Tree3_t[map[string]struct{}]
+	approve *regexp.Regexp
 }
 
-func NewParseBasic(keys map[string][]string, require_name string) (self *ParseBasic_t, err error) {
+func NewParseBasic(keys map[string][]string, approve string) (self *ParseBasic_t, err error) {
 	self = &ParseBasic_t{
 		keys: tst.NewTree3[map[string]struct{}](),
 	}
 
-	if self.require_name, err = regexp.Compile(require_name); err != nil {
+	if self.approve, err = regexp.Compile(approve); err != nil {
 		return
 	}
 

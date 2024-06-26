@@ -13,22 +13,22 @@ import (
 )
 
 type ParseBearer_t struct {
-	keys         *tst.Tree3_t[[]jwt.Verifier]
-	require_name *regexp.Regexp
+	keys    *tst.Tree3_t[[]jwt.Verifier]
+	approve *regexp.Regexp
 }
 
-func NewParseBearer(keys map[string][]Key_t, require_name string) (self *ParseBearer_t, err error) {
+func NewParseBearer(keys map[string][]Key_t, approve string) (self *ParseBearer_t, err error) {
 	self = &ParseBearer_t{
 		keys: tst.NewTree3[[]jwt.Verifier](),
 	}
 
-	if self.require_name, err = regexp.Compile(require_name); err != nil {
+	if self.approve, err = regexp.Compile(approve); err != nil {
 		return
 	}
 
+	var verify jwt.Verifier
 	for k, v := range keys {
 		var keys []jwt.Verifier
-		var verify jwt.Verifier
 		for _, key := range v {
 			if key.Hmac {
 				verify, err = jwt.NewHmacKey(key.Value)
@@ -75,7 +75,7 @@ func (self *ParseBearer_t) Verify(path string, in []byte) (payload []byte, err e
 
 func (self *ParseBearer_t) Approve(path string, found []Token) bool {
 	for _, v := range found {
-		if self.require_name.MatchString(v.GetName()) {
+		if self.approve.MatchString(v.GetName()) {
 			return true
 		}
 	}
