@@ -108,30 +108,28 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ts := time.Now()
 	found, _ := r.Context().Value(&auth).(Found_t)
 	verifier, ok := self.parser.Verifier(r.URL.Path)
-	for _, v1 := range self.find {
-		for _, v2 := range v1.Find(r) {
-			if ok {
+	if ok {
+		for _, v1 := range self.find {
+			for _, v2 := range v1.Find(r) {
 				if payload, err = verifier.Verify(v2.GetValue()); err != nil {
 					v2.SetError(err)
 				}
 				if err = v2.Validate(r.URL.Path, ts, payload); err != nil {
 					v2.SetError(err)
 				}
-			} else {
-				v2.SetError(ERROR_VERIFY)
-			}
-			if v2.GetError() != nil {
-				found.Failed = append(found.Failed, v2)
-			} else {
-				found.Passed = append(found.Passed, v2)
+				if v2.GetError() != nil {
+					found.Failed = append(found.Failed, v2)
+				} else {
+					found.Passed = append(found.Passed, v2)
+				}
 			}
 		}
+		if verifier.Approve(found.Passed) {
+			self.next_passed.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), &auth, found)))
+			return
+		}
 	}
-	if ok && verifier.Approve(found.Passed) {
-		self.next_passed.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), &auth, found)))
-	} else {
-		self.next_failed.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), &auth, found)))
-	}
+	self.next_failed.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), &auth, found)))
 }
 
 type Status_t struct {
