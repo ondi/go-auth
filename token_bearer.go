@@ -10,7 +10,7 @@ import (
 )
 
 type BearerValidator interface {
-	ValidateBearer(path string, ts time.Time, token *TokenBearer_t) error
+	ValidateBearer(ts time.Time, token *TokenBearer_t) error
 }
 
 type TokenBearer_t struct {
@@ -51,7 +51,7 @@ func (self *TokenBearer_t) SetError(in error) {
 	self.Error = in
 }
 
-func (self *TokenBearer_t) Validate(path string, ts time.Time, payload []byte) (err error) {
+func (self *TokenBearer_t) Validate(ts time.Time, payload []byte) (err error) {
 	if self.Error != nil {
 		return
 	}
@@ -59,7 +59,7 @@ func (self *TokenBearer_t) Validate(path string, ts time.Time, payload []byte) (
 		return
 	}
 	for _, v := range self.validators {
-		if err = v.ValidateBearer(path, ts, self); err != nil {
+		if err = v.ValidateBearer(ts, self); err != nil {
 			return
 		}
 	}
@@ -77,7 +77,7 @@ func NewExp(nbf int64, exp int64) *Exp_t {
 	return &Exp_t{Nbf: nbf, Exp: exp}
 }
 
-func (self *Exp_t) ValidateBearer(path string, ts time.Time, token *TokenBearer_t) error {
+func (self *Exp_t) ValidateBearer(ts time.Time, token *TokenBearer_t) error {
 	var test float64
 	// not before
 	temp, ok := token.Body["nbf"]

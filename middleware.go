@@ -35,7 +35,7 @@ type Token interface {
 	GetValue() []byte
 	GetError() error
 	SetError(error)
-	Validate(path string, ts time.Time, payload []byte) error
+	Validate(ts time.Time, payload []byte) error
 }
 
 type TokenCreate interface {
@@ -114,7 +114,7 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				if payload, err = verifier.Verify(v2.GetValue()); err != nil {
 					v2.SetError(err)
 				}
-				if err = v2.Validate(r.URL.Path, ts, payload); err != nil {
+				if err = v2.Validate(ts, payload); err != nil {
 					v2.SetError(err)
 				}
 				if v2.GetError() != nil {
