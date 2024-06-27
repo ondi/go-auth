@@ -12,24 +12,58 @@ import (
 	"github.com/ondi/go-tst"
 )
 
-type ParseBearer_t struct {
-	keys    *tst.Tree3_t[[]jwt.Verifier]
+type keys_bearer_t struct {
+	verify  []jwt.Verifier
 	approve *regexp.Regexp
 }
 
-func NewParseBearer(keys map[string][]Key_t, approve string) (self *ParseBearer_t, err error) {
-	self = &ParseBearer_t{
-		keys: tst.NewTree3[[]jwt.Verifier](),
-	}
-
-	if self.approve, err = regexp.Compile(approve); err != nil {
+func (self *keys_bearer_t) Verify(token []byte) (payload []byte, err error) {
+	alg, bits, _, payload, signature, err := jwt.Parse(token)
+	if err != nil {
 		return
+	}
+	for _, v := range self.verify {
+		if strings.HasPrefix(alg, v.Name()) == false {
+			continue
+		}
+		if jwt.Verify(v, bits, signature, token) {
+			return
+		}
+	}
+	err = ERROR_VERIFY
+	return
+}
+
+func (self *keys_bearer_t) Approve(found []Token) bool {
+	for _, v := range found {
+		if self.approve.MatchString(v.GetName()) {
+			return true
+		}
+	}
+	return false
+}
+
+type KeysBearer_t struct {
+	Keys    []Key_t
+	Approve string
+}
+
+type ParseBearer_t struct {
+	args *tst.Tree3_t[*keys_bearer_t]
+}
+
+func NewParseBearer(args map[string]KeysBearer_t) (self *ParseBearer_t, err error) {
+	self = &ParseBearer_t{
+		args: tst.NewTree3[*keys_bearer_t](),
 	}
 
 	var verify jwt.Verifier
-	for k, v := range keys {
-		var keys []jwt.Verifier
-		for _, key := range v {
+	for k, v := range args {
+		temp := &keys_bearer_t{}
+		if temp.approve, err = regexp.Compile(v.Approve); err != nil {
+			return
+		}
+		for _, key := range v.Keys {
 			if key.Hmac {
 				verify, err = jwt.NewHmacKey(key.Value)
 			} else if key.Cert {
@@ -48,36 +82,14 @@ func NewParseBearer(keys map[string][]Key_t, approve string) (self *ParseBearer_
 			if err != nil {
 				return
 			}
-			keys = append(keys, verify)
+			temp.verify = append(temp.verify, verify)
 		}
-		self.keys.Add(k, keys)
+		self.args.Add(k, temp)
 	}
 	return
 }
 
-func (self *ParseBearer_t) Verify(path string, in []byte) (payload []byte, err error) {
-	alg, bits, _, payload, signature, err := jwt.Parse(in)
-	if err != nil {
-		return
-	}
-	verify, _ := self.keys.Search(path)
-	for _, v := range verify {
-		if strings.HasPrefix(alg, v.Name()) == false {
-			continue
-		}
-		if jwt.Verify(v, bits, signature, in) {
-			return
-		}
-	}
-	err = ERROR_VERIFY
+func (self *ParseBearer_t) Verifier(path string) (verifier Verifier, ok bool) {
+	verifier, ok = self.args.Search(path)
 	return
-}
-
-func (self *ParseBearer_t) Approve(path string, found []Token) bool {
-	for _, v := range found {
-		if self.approve.MatchString(v.GetName()) {
-			return true
-		}
-	}
-	return false
 }
