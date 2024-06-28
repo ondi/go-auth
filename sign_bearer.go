@@ -8,42 +8,29 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/ondi/go-jwt"
 )
 
 type Key_t struct {
 	Value []byte
-	DER   bool // default PEM
-	Hmac  bool
-	Cert  bool
+	Hmac  bool // use symmetric HMAC, if true options below ignored
+	Cert  bool // use ParseCertificate or ParsePublicKey
+	DER   bool // format, default PEM
 }
 
-func ReadFile(in string) (out Key_t, err error) {
-	if out.Value, err = os.ReadFile(in); err != nil {
-		return
-	}
-	if strings.Contains(in, "cert") {
-		out.Cert = true
-	}
-	if strings.Contains(in, "hmac") {
-		out.Hmac = true
-	}
-	if strings.HasSuffix(in, ".der") {
-		out.DER = true
-	}
-	return
-}
-
-func AppendKeysGlob(in []Key_t, pattern string) ([]Key_t, error) {
+func AppendKeysGlob(in []Key_t, pattern string, Hmac bool, Cert bool, DER bool) ([]Key_t, error) {
 	matched, err := filepath.Glob(pattern)
 	if err != nil {
 		return in, err
 	}
-	var key Key_t
+	key := Key_t{
+		Hmac: Hmac,
+		Cert: Cert,
+		DER:  DER,
+	}
 	for _, v := range matched {
-		if key, err = ReadFile(v); err != nil {
+		if key.Value, err = os.ReadFile(v); err != nil {
 			return in, err
 		}
 		in = append(in, key)
