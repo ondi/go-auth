@@ -24,8 +24,8 @@ var (
 	ERROR_FORMAT_EXP = errors.New("exp format")
 	ERROR_NBF        = errors.New("nbf")
 	ERROR_EXP        = errors.New("exp")
-	KEY_BEARER       = KeyPrefix_t{Key: HEADER, Prefix: "Bearer"}
-	KEY_BASIC        = KeyPrefix_t{Key: HEADER, Prefix: "Basic"}
+	KEY_BEARER       = FindArgs_t{HeaderKey: HEADER, HeaderPrefix: "Bearer", QueryKey: "bearer"}
+	KEY_BASIC        = FindArgs_t{HeaderKey: HEADER, HeaderPrefix: "Basic", QueryKey: "basic"}
 )
 
 type Token interface {
@@ -58,9 +58,10 @@ type Found_t struct {
 	Failed []Token
 }
 
-type KeyPrefix_t struct {
-	Key    string
-	Prefix string
+type FindArgs_t struct {
+	HeaderKey    string
+	HeaderPrefix string
+	QueryKey     string
 }
 
 func HasPrefix(in string, prefix string) (res int) {
