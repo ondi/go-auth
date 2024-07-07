@@ -27,7 +27,7 @@ func NewTokenBearer(validators ...BearerValidator) *TokenBearer_t {
 	}
 }
 
-func (self *TokenBearer_t) Create(name string, value []byte) Token {
+func (self *TokenBearer_t) TokenCreate(name string, value []byte) Token {
 	return &TokenBearer_t{
 		Name:       name,
 		Value:      value,

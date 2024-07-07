@@ -36,12 +36,12 @@ type Token interface {
 	Validate(ts time.Time, payload []byte) error
 }
 
-type TokenCreate interface {
-	Create(name string, value []byte) Token
+type TokenCreator interface {
+	TokenCreate(name string, value []byte) Token
 }
 
-type TokenFind interface {
-	Find(r *http.Request) []Token
+type TokenFinder interface {
+	TokenFind(r *http.Request) []Token
 }
 
 type Verifier interface {
@@ -49,7 +49,7 @@ type Verifier interface {
 	Approve(passed []Token) (ok bool)
 }
 
-type Parser interface {
+type Verifiers interface {
 	Verifier(path string) (verifier Verifier, ok bool)
 }
 
@@ -85,16 +85,16 @@ func Found(ctx context.Context) (res Found_t) {
 }
 
 type Auth_t struct {
-	find        []TokenFind
-	parser      Parser
+	find        []TokenFinder
+	verifiers   Verifiers
 	next_passed http.Handler
 	next_failed http.Handler
 }
 
-func NewAuth(next_passed http.Handler, next_failed http.Handler, parser Parser, find ...TokenFind) (self *Auth_t) {
+func NewAuth(next_passed http.Handler, next_failed http.Handler, verifiers Verifiers, find ...TokenFinder) (self *Auth_t) {
 	self = &Auth_t{
 		find:        find,
-		parser:      parser,
+		verifiers:   verifiers,
 		next_passed: next_passed,
 		next_failed: next_failed,
 	}
@@ -106,10 +106,10 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var payload []byte
 	ts := time.Now()
 	found, _ := r.Context().Value(&auth).(Found_t)
-	verifier, ok := self.parser.Verifier(r.URL.Path)
+	verifier, ok := self.verifiers.Verifier(r.URL.Path)
 	if ok {
 		for _, v1 := range self.find {
-			for _, v2 := range v1.Find(r) {
+			for _, v2 := range v1.TokenFind(r) {
 				if payload, err = verifier.Verify(v2.GetValue()); err != nil {
 					v2.SetError(err)
 				}

@@ -27,7 +27,7 @@ func NewTokenBasic(validators ...BasicValidator) *TokenBasic_t {
 	}
 }
 
-func (self *TokenBasic_t) Create(name string, value []byte) Token {
+func (self *TokenBasic_t) TokenCreate(name string, value []byte) Token {
 	return &TokenBasic_t{
 		Name:       name,
 		Value:      value,
