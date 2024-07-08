@@ -30,7 +30,7 @@ func (self *keys_bearer_t) Verify(token []byte) (payload []byte, err error) {
 			return
 		}
 	}
-	err = ERROR_VERIFY
+	err = ERROR_NO_VERIFIERS
 	return
 }
 

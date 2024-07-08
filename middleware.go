@@ -18,14 +18,14 @@ const HEADER = "Authorization"
 
 var (
 	// &auth used for context.Value key
-	auth             = 1
-	ERROR_VERIFY     = errors.New("parse/verify failed")
-	ERROR_FORMAT_NBF = errors.New("nbf format")
-	ERROR_FORMAT_EXP = errors.New("exp format")
-	ERROR_NBF        = errors.New("nbf")
-	ERROR_EXP        = errors.New("exp")
-	KEY_BEARER       = FindArgs_t{HeaderKey: HEADER, HeaderPrefix: "Bearer", QueryKey: "bearer"}
-	KEY_BASIC        = FindArgs_t{HeaderKey: HEADER, HeaderPrefix: "Basic", QueryKey: "basic"}
+	auth               = 1
+	ERROR_NO_VERIFIERS = errors.New("no verifiers")
+	ERROR_FORMAT_NBF   = errors.New("nbf format")
+	ERROR_FORMAT_EXP   = errors.New("exp format")
+	ERROR_NBF          = errors.New("nbf")
+	ERROR_EXP          = errors.New("exp")
+	KEY_BEARER         = FindArgs_t{HeaderKey: HEADER, HeaderPrefix: "Bearer", QueryKey: "bearer"}
+	KEY_BASIC          = FindArgs_t{HeaderKey: HEADER, HeaderPrefix: "Basic", QueryKey: "basic"}
 )
 
 type Token interface {

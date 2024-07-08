@@ -24,7 +24,7 @@ func (self *keys_basic_t) Verify(token []byte) (payload []byte, err error) {
 	if _, ok := self.verify[string(token)]; ok {
 		return
 	}
-	err = ERROR_VERIFY
+	err = ERROR_NO_VERIFIERS
 	return
 }
 
