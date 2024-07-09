@@ -49,7 +49,7 @@ type Verifier interface {
 	Approve(passed []Token) (ok bool)
 }
 
-type RouteVerifier interface {
+type Routes interface {
 	Verifier(path string) (verifier Verifier, ok bool)
 }
 
@@ -86,15 +86,15 @@ func Found(ctx context.Context) (res Found_t) {
 
 type Auth_t struct {
 	find        []TokenFinder
-	route       RouteVerifier
+	routes      Routes
 	next_passed http.Handler
 	next_failed http.Handler
 }
 
-func NewAuth(next_passed http.Handler, next_failed http.Handler, route RouteVerifier, find ...TokenFinder) (self *Auth_t) {
+func NewAuth(next_passed http.Handler, next_failed http.Handler, routes Routes, find ...TokenFinder) (self *Auth_t) {
 	self = &Auth_t{
 		find:        find,
-		route:       route,
+		routes:      routes,
 		next_passed: next_passed,
 		next_failed: next_failed,
 	}
@@ -106,7 +106,7 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var payload []byte
 	ts := time.Now()
 	found, _ := r.Context().Value(&auth).(Found_t)
-	verifier, ok := self.route.Verifier(r.URL.Path)
+	verifier, ok := self.routes.Verifier(r.URL.Path)
 	if ok {
 		for _, v1 := range self.find {
 			for _, v2 := range v1.TokenFind(r) {
