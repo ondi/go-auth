@@ -7,7 +7,18 @@ package auth
 import (
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
+	"strings"
+	"unicode"
+	"unicode/utf8"
 )
+
+type FindArgs_t struct {
+	HeaderKey    string
+	HeaderPrefix string
+	QueryKey     string
+}
 
 type TokenFind_t struct {
 	create TokenCreator
@@ -40,6 +51,40 @@ func (self *TokenFind_t) TokenFind(r *http.Request) (out []Token) {
 		for _, v2 := range r.URL.Query()[v.QueryKey] {
 			out = append(out, self.create.TokenCreate(v.QueryKey, []byte(v2)))
 		}
+	}
+	return
+}
+
+func HasPrefix(in string, prefix string) (res int) {
+	res = len(prefix)
+	if len(in) < res || strings.EqualFold(in[:res], prefix) == false {
+		return -1
+	}
+	for {
+		v, size := utf8.DecodeRuneInString(in[res:])
+		if unicode.IsSpace(v) == false {
+			break
+		}
+		res += size
+	}
+	return
+}
+
+func KeysGlob(pattern string, Hmac bool, Cert bool, DER bool) (out []Key_t, err error) {
+	matched, err := filepath.Glob(pattern)
+	if err != nil {
+		return
+	}
+	key := Key_t{
+		Hmac: Hmac,
+		Cert: Cert,
+		DER:  DER,
+	}
+	for _, v := range matched {
+		if key.Value, err = os.ReadFile(v); err != nil {
+			return
+		}
+		out = append(out, key)
 	}
 	return
 }

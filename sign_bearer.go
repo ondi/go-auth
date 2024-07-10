@@ -6,8 +6,6 @@ package auth
 
 import (
 	"bytes"
-	"os"
-	"path/filepath"
 
 	"github.com/ondi/go-jwt"
 )
@@ -17,25 +15,6 @@ type Key_t struct {
 	Hmac  bool // use symmetric HMAC, if true options below ignored
 	Cert  bool // use ParseCertificate or ParsePublicKey
 	DER   bool // format, default PEM
-}
-
-func AppendKeysGlob(in []Key_t, pattern string, Hmac bool, Cert bool, DER bool) ([]Key_t, error) {
-	matched, err := filepath.Glob(pattern)
-	if err != nil {
-		return in, err
-	}
-	key := Key_t{
-		Hmac: Hmac,
-		Cert: Cert,
-		DER:  DER,
-	}
-	for _, v := range matched {
-		if key.Value, err = os.ReadFile(v); err != nil {
-			return in, err
-		}
-		in = append(in, key)
-	}
-	return in, err
 }
 
 type Signer interface {

@@ -8,10 +8,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strings"
 	"time"
-	"unicode"
-	"unicode/utf8"
 )
 
 const HEADER = "Authorization"
@@ -56,27 +53,6 @@ type Routes interface {
 type Found_t struct {
 	Passed []Token
 	Failed []Token
-}
-
-type FindArgs_t struct {
-	HeaderKey    string
-	HeaderPrefix string
-	QueryKey     string
-}
-
-func HasPrefix(in string, prefix string) (res int) {
-	res = len(prefix)
-	if len(in) < res || strings.EqualFold(in[:res], prefix) == false {
-		return -1
-	}
-	for {
-		v, size := utf8.DecodeRuneInString(in[res:])
-		if unicode.IsSpace(v) == false {
-			break
-		}
-		res += size
-	}
-	return
 }
 
 func Found(ctx context.Context) (res Found_t) {
