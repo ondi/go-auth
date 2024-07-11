@@ -55,9 +55,20 @@ type Found_t struct {
 	Failed []Token
 }
 
-func Found(ctx context.Context) (res Found_t) {
-	res, _ = ctx.Value(&auth).(Found_t)
+func Found(ctx context.Context) (res *Found_t) {
+	res, _ = ctx.Value(&auth).(*Found_t)
 	return
+}
+
+func set_context(r *http.Request, passed []Token, failed []Token) *http.Request {
+	found, _ := r.Context().Value(&auth).(*Found_t)
+	if found == nil {
+		found = &Found_t{}
+		r = r.WithContext(context.WithValue(r.Context(), &auth, found))
+	}
+	found.Passed = append(found.Passed, passed...)
+	found.Failed = append(found.Failed, failed...)
+	return r
 }
 
 type Auth_t struct {
@@ -80,8 +91,8 @@ func NewAuth(next_passed http.Handler, next_failed http.Handler, routes Routes, 
 func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var payload []byte
+	var passed, failed []Token
 	ts := time.Now()
-	found, _ := r.Context().Value(&auth).(Found_t)
 	verifier, ok := self.routes.Verifier(r.URL.Path)
 	if ok {
 		for _, v1 := range self.find {
@@ -93,18 +104,18 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					v2.SetError(err)
 				}
 				if v2.GetError() != nil {
-					found.Failed = append(found.Failed, v2)
+					failed = append(failed, v2)
 				} else {
-					found.Passed = append(found.Passed, v2)
+					passed = append(passed, v2)
 				}
 			}
 		}
-		if verifier.Approve(found.Passed) {
-			self.next_passed.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), &auth, found)))
+		if verifier.Approve(passed) {
+			self.next_passed.ServeHTTP(w, set_context(r, passed, failed))
 			return
 		}
 	}
-	self.next_failed.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), &auth, found)))
+	self.next_failed.ServeHTTP(w, set_context(r, passed, failed))
 }
 
 type Status_t struct {
