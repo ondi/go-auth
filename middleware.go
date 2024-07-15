@@ -21,8 +21,8 @@ var (
 	ERROR_FORMAT_EXP   = errors.New("exp format")
 	ERROR_NBF          = errors.New("nbf")
 	ERROR_EXP          = errors.New("exp")
-	KEY_BEARER         = FindArgs_t{Name: HEADER, HeaderKey: HEADER, HeaderPrefix: "Bearer", QueryKey: "bearer"}
-	KEY_BASIC          = FindArgs_t{Name: HEADER, HeaderKey: HEADER, HeaderPrefix: "Basic", QueryKey: "basic"}
+	KEY_BEARER         = FindArgs_t{Name: "bearer", HeaderKey: HEADER, HeaderPrefix: "Bearer", QueryKey: "bearer"}
+	KEY_BASIC          = FindArgs_t{Name: "basic", HeaderKey: HEADER, HeaderPrefix: "Basic", QueryKey: "basic"}
 )
 
 type Token interface {
