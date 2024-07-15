@@ -15,6 +15,7 @@ import (
 )
 
 type FindArgs_t struct {
+	Name         string
 	HeaderKey    string
 	HeaderPrefix string
 	QueryKey     string
@@ -38,18 +39,18 @@ func (self *TokenFind_t) TokenFind(r *http.Request) (out []Token) {
 	for _, v := range self.keys {
 		for _, token = range r.Header[v.HeaderKey] {
 			if ix = HasPrefix(token, v.HeaderPrefix); ix > -1 {
-				out = append(out, self.create.TokenCreate(v.HeaderKey, []byte(token[ix:])))
+				out = append(out, self.create.TokenCreate(v.Name, []byte(token[ix:])))
 			}
 		}
 		if c, err := r.Cookie(v.HeaderKey); err == nil {
 			if token, err = url.QueryUnescape(c.Value); err == nil {
 				if ix = HasPrefix(token, v.HeaderPrefix); ix > -1 {
-					out = append(out, self.create.TokenCreate(v.HeaderKey, []byte(token[ix:])))
+					out = append(out, self.create.TokenCreate(v.Name, []byte(token[ix:])))
 				}
 			}
 		}
 		for _, v2 := range r.URL.Query()[v.QueryKey] {
-			out = append(out, self.create.TokenCreate(v.QueryKey, []byte(v2)))
+			out = append(out, self.create.TokenCreate(v.Name, []byte(v2)))
 		}
 	}
 	return
