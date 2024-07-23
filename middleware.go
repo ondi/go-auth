@@ -48,29 +48,29 @@ type Routes interface {
 	Verifier(path string) (verifier Verifier, ok bool)
 }
 
-type found_t struct {
+type Found_t struct {
 	Passed []Token
 	Failed []Token
 }
 
 func Passed(ctx context.Context) (passed []Token) {
-	if found, _ := ctx.Value(&auth).(*found_t); found != nil {
-		passed = found.Passed
+	if temp, _ := ctx.Value(&auth).(*Found_t); temp != nil {
+		passed = temp.Passed
 	}
 	return
 }
 
-func Found(ctx context.Context) (passed []Token, failed []Token) {
-	if found, _ := ctx.Value(&auth).(*found_t); found != nil {
-		passed, failed = found.Passed, found.Failed
+func Found(ctx context.Context) (found Found_t) {
+	if temp, _ := ctx.Value(&auth).(*Found_t); temp != nil {
+		found = *temp
 	}
 	return
 }
 
 func AppendCtx(ctx context.Context, passed []Token, failed []Token) context.Context {
-	found, _ := ctx.Value(&auth).(*found_t)
+	found, _ := ctx.Value(&auth).(*Found_t)
 	if found == nil {
-		found = &found_t{}
+		found = &Found_t{}
 		ctx = context.WithValue(ctx, &auth, found)
 	}
 	found.Passed = append(found.Passed, passed...)
