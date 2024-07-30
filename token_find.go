@@ -24,20 +24,20 @@ type TokenArgs_t struct {
 
 type TokenFind_t struct {
 	create TokenCreator
-	keys   []TokenArgs_t
+	args   []TokenArgs_t
 }
 
-func NewTokenFind(create TokenCreator, keys ...TokenArgs_t) *TokenFind_t {
+func NewTokenFind(create TokenCreator, args ...TokenArgs_t) *TokenFind_t {
 	return &TokenFind_t{
 		create: create,
-		keys:   keys,
+		args:   args,
 	}
 }
 
 func (self *TokenFind_t) TokenFind(r *http.Request) (out []Token) {
 	var ix int
 	var token string
-	for _, v := range self.keys {
+	for _, v := range self.args {
 		for _, token = range r.Header[v.HeaderKey] {
 			if ix = HasPrefix(token, v.HeaderPrefix); ix > -1 {
 				out = append(out, self.create.TokenCreate(v.Name, v.Type, []byte(token[ix:])))
