@@ -15,6 +15,7 @@ type BasicValidator interface {
 
 type TokenBasic_t struct {
 	Name       string
+	Type       string
 	Value      []byte
 	Body       []byte
 	Error      error
@@ -27,16 +28,21 @@ func NewTokenBasic(validators ...BasicValidator) *TokenBasic_t {
 	}
 }
 
-func (self *TokenBasic_t) TokenCreate(name string, value []byte) Token {
+func (self *TokenBasic_t) TokenCreate(Name string, Type string, Value []byte) Token {
 	return &TokenBasic_t{
-		Name:       name,
-		Value:      value,
+		Name:       Name,
+		Type:       Type,
+		Value:      Value,
 		validators: self.validators,
 	}
 }
 
 func (self *TokenBasic_t) GetName() string {
 	return self.Name
+}
+
+func (self *TokenBasic_t) GetType() string {
+	return self.Type
 }
 
 func (self *TokenBasic_t) GetValue() []byte {

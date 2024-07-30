@@ -15,6 +15,7 @@ type BearerValidator interface {
 
 type TokenBearer_t struct {
 	Name       string
+	Type       string
 	Value      []byte
 	Body       map[string]interface{}
 	Error      error
@@ -27,16 +28,21 @@ func NewTokenBearer(validators ...BearerValidator) *TokenBearer_t {
 	}
 }
 
-func (self *TokenBearer_t) TokenCreate(name string, value []byte) Token {
+func (self *TokenBearer_t) TokenCreate(Name string, Type string, Value []byte) Token {
 	return &TokenBearer_t{
-		Name:       name,
-		Value:      value,
+		Name:       Name,
+		Type:       Type,
+		Value:      Value,
 		validators: self.validators,
 	}
 }
 
 func (self *TokenBearer_t) GetName() string {
 	return self.Name
+}
+
+func (self *TokenBearer_t) GetType() string {
+	return self.Type
 }
 
 func (self *TokenBearer_t) GetValue() []byte {

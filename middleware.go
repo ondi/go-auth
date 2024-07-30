@@ -19,12 +19,13 @@ var (
 	ERROR_FORMAT_EXP   = errors.New("exp format")
 	ERROR_NBF          = errors.New("nbf")
 	ERROR_EXP          = errors.New("exp")
-	KEY_BEARER         = FindArgs_t{Name: "bearer", HeaderKey: "Authorization", HeaderPrefix: "Bearer", QueryKey: "bearer"}
-	KEY_BASIC          = FindArgs_t{Name: "basic", HeaderKey: "Authorization", HeaderPrefix: "Basic", QueryKey: "basic"}
+	KEY_BEARER         = TokenArgs_t{Name: "bearer", Type: "Bearer", HeaderKey: "Authorization", HeaderPrefix: "Bearer", QueryKey: "bearer"}
+	KEY_BASIC          = TokenArgs_t{Name: "basic", Type: "Basic", HeaderKey: "Authorization", HeaderPrefix: "Basic", QueryKey: "basic"}
 )
 
 type Token interface {
 	GetName() string
+	GetType() string
 	GetValue() []byte
 	GetError() error
 	SetError(error)
@@ -32,7 +33,7 @@ type Token interface {
 }
 
 type TokenCreator interface {
-	TokenCreate(name string, value []byte) Token
+	TokenCreate(Name string, Type string, Value []byte) Token
 }
 
 type TokenFinder interface {

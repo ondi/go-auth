@@ -14,8 +14,9 @@ import (
 	"unicode/utf8"
 )
 
-type FindArgs_t struct {
+type TokenArgs_t struct {
 	Name         string
+	Type         string
 	HeaderKey    string
 	HeaderPrefix string
 	QueryKey     string
@@ -23,10 +24,10 @@ type FindArgs_t struct {
 
 type TokenFind_t struct {
 	create TokenCreator
-	keys   []FindArgs_t
+	keys   []TokenArgs_t
 }
 
-func NewTokenFind(create TokenCreator, keys ...FindArgs_t) *TokenFind_t {
+func NewTokenFind(create TokenCreator, keys ...TokenArgs_t) *TokenFind_t {
 	return &TokenFind_t{
 		create: create,
 		keys:   keys,
@@ -39,18 +40,18 @@ func (self *TokenFind_t) TokenFind(r *http.Request) (out []Token) {
 	for _, v := range self.keys {
 		for _, token = range r.Header[v.HeaderKey] {
 			if ix = HasPrefix(token, v.HeaderPrefix); ix > -1 {
-				out = append(out, self.create.TokenCreate(v.Name, []byte(token[ix:])))
+				out = append(out, self.create.TokenCreate(v.Name, v.Type, []byte(token[ix:])))
 			}
 		}
 		if c, err := r.Cookie(v.HeaderKey); err == nil {
 			if token, err = url.QueryUnescape(c.Value); err == nil {
 				if ix = HasPrefix(token, v.HeaderPrefix); ix > -1 {
-					out = append(out, self.create.TokenCreate(v.Name, []byte(token[ix:])))
+					out = append(out, self.create.TokenCreate(v.Name, v.Type, []byte(token[ix:])))
 				}
 			}
 		}
 		for _, v2 := range r.URL.Query()[v.QueryKey] {
-			out = append(out, self.create.TokenCreate(v.Name, []byte(v2)))
+			out = append(out, self.create.TokenCreate(v.Name, v.Type, []byte(v2)))
 		}
 	}
 	return
