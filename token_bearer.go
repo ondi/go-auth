@@ -6,11 +6,13 @@ package auth
 
 import (
 	"encoding/json"
+	"sync/atomic"
 	"time"
 )
 
 type BearerValidator interface {
 	ValidateBearer(ts time.Time, token *TokenBearer_t) error
+	Suspend(bool)
 }
 
 type TokenBearer_t struct {
@@ -73,17 +75,25 @@ func (self *TokenBearer_t) Validate(ts time.Time, payload []byte) (err error) {
 }
 
 type Exp_t struct {
-	Nbf int64
-	Exp int64
+	nbf     int64
+	exp     int64
+	suspend atomic.Bool
 }
 
 // nbf = -60
 // exp = 60
 func NewExp(nbf int64, exp int64) *Exp_t {
-	return &Exp_t{Nbf: nbf, Exp: exp}
+	return &Exp_t{nbf: nbf, exp: exp}
+}
+
+func (self *Exp_t) Suspend(in bool) {
+	self.suspend.Store(in)
 }
 
 func (self *Exp_t) ValidateBearer(ts time.Time, token *TokenBearer_t) error {
+	if self.suspend.Load() {
+		return nil
+	}
 	var test float64
 	// not before
 	temp, ok := token.Body["nbf"]
@@ -91,7 +101,7 @@ func (self *Exp_t) ValidateBearer(ts time.Time, token *TokenBearer_t) error {
 		if test, ok = temp.(float64); !ok {
 			return ERROR_FORMAT_NBF
 		}
-		if ok = ts.Unix() >= int64(test)+self.Nbf; !ok {
+		if ok = ts.Unix() >= int64(test)+self.nbf; !ok {
 			return ERROR_NBF
 		}
 	}
@@ -101,7 +111,7 @@ func (self *Exp_t) ValidateBearer(ts time.Time, token *TokenBearer_t) error {
 		if test, ok = temp.(float64); !ok {
 			return ERROR_FORMAT_EXP
 		}
-		if ok = ts.Unix() < int64(test)+self.Exp; !ok {
+		if ok = ts.Unix() < int64(test)+self.exp; !ok {
 			return ERROR_EXP
 		}
 	}

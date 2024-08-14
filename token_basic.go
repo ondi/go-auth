@@ -11,6 +11,7 @@ import (
 
 type BasicValidator interface {
 	ValidateBasic(ts time.Time, token *TokenBasic_t) error
+	Suspend(bool)
 }
 
 type TokenBasic_t struct {
