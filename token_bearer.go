@@ -6,7 +6,6 @@ package auth
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 )
 
@@ -57,8 +56,6 @@ func (self *TokenBearer_t) GetError() error {
 func (self *TokenBearer_t) SetError(in error) {
 	if self.Error == nil {
 		self.Error = in
-	} else {
-		self.Error = fmt.Errorf("%w, %w", self.Error, in)
 	}
 }
 

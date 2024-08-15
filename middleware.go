@@ -32,6 +32,14 @@ type Token interface {
 	Validate(ts time.Time, payload []byte) error
 }
 
+type ErrorVerify_t struct {
+	error
+}
+
+type ErrorValidate_t struct {
+	error
+}
+
 type TokenCreator interface {
 	TokenCreate(Name string, Type string, Value []byte) Token
 }
@@ -99,10 +107,10 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		for _, v1 := range self.find {
 			for _, v2 := range v1.TokenFind(r) {
 				if payload, err = verifier.Verify(v2.GetValue()); err != nil {
-					v2.SetError(err)
+					v2.SetError(ErrorVerify_t{err})
 				}
 				if err = v2.Validate(ts, payload); err != nil {
-					v2.SetError(err)
+					v2.SetError(ErrorValidate_t{err})
 				}
 				if v2.GetError() != nil {
 					found.Failed = append(found.Failed, v2)
