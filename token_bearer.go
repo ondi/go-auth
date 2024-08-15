@@ -7,13 +7,11 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
-	"sync/atomic"
 	"time"
 )
 
 type BearerValidator interface {
 	ValidateBearer(ts time.Time, token *TokenBearer_t) error
-	Suspend(bool)
 }
 
 type TokenBearer_t struct {
@@ -77,9 +75,8 @@ func (self *TokenBearer_t) Validate(ts time.Time, payload []byte) (err error) {
 }
 
 type Exp_t struct {
-	nbf     int64
-	exp     int64
-	suspend atomic.Bool
+	nbf int64
+	exp int64
 }
 
 // nbf = -60
@@ -88,14 +85,7 @@ func NewExp(nbf int64, exp int64) *Exp_t {
 	return &Exp_t{nbf: nbf, exp: exp}
 }
 
-func (self *Exp_t) Suspend(in bool) {
-	self.suspend.Store(in)
-}
-
 func (self *Exp_t) ValidateBearer(ts time.Time, token *TokenBearer_t) error {
-	if self.suspend.Load() {
-		return nil
-	}
 	var test float64
 	// not before
 	temp, ok := token.Body["nbf"]
