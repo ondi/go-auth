@@ -6,6 +6,7 @@ package auth
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync/atomic"
 	"time"
 )
@@ -56,13 +57,14 @@ func (self *TokenBearer_t) GetError() error {
 }
 
 func (self *TokenBearer_t) SetError(in error) {
-	self.Error = in
+	if self.Error == nil {
+		self.Error = in
+	} else {
+		self.Error = fmt.Errorf("%w, %w", self.Error, in)
+	}
 }
 
 func (self *TokenBearer_t) Validate(ts time.Time, payload []byte) (err error) {
-	if self.Error != nil {
-		return
-	}
 	if err = json.Unmarshal(payload, &self.Body); err != nil {
 		return
 	}

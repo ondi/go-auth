@@ -6,6 +6,7 @@ package auth
 
 import (
 	"bytes"
+	"fmt"
 	"time"
 )
 
@@ -55,13 +56,14 @@ func (self *TokenBasic_t) GetError() error {
 }
 
 func (self *TokenBasic_t) SetError(in error) {
-	self.Error = in
+	if self.Error == nil {
+		self.Error = in
+	} else {
+		self.Error = fmt.Errorf("%w, %w", self.Error, in)
+	}
 }
 
 func (self *TokenBasic_t) Validate(ts time.Time, payload []byte) (err error) {
-	if self.Error != nil {
-		return
-	}
 	if ix := bytes.IndexByte(payload, ':'); ix > -1 {
 		self.Body = payload[:ix]
 	} else {
