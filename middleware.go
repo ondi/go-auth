@@ -13,14 +13,14 @@ import (
 
 var (
 	// &auth used for context.Value key
-	auth               = 1
-	ERROR_NO_VERIFIERS = errors.New("no verifiers")
-	ERROR_FORMAT_NBF   = errors.New("nbf format")
-	ERROR_FORMAT_EXP   = errors.New("exp format")
-	ERROR_NBF          = errors.New("nbf")
-	ERROR_EXP          = errors.New("exp")
-	KEY_BEARER         = TokenArgs_t{Name: "bearer", Type: "Bearer", HeaderKey: "Authorization", HeaderPrefix: "Bearer", QueryKey: "bearer"}
-	KEY_BASIC          = TokenArgs_t{Name: "basic", Type: "Basic", HeaderKey: "Authorization", HeaderPrefix: "Basic", QueryKey: "basic"}
+	auth                      = 1
+	ERROR_VERIFY_FAILED       = errors.New("verify failed")
+	ERROR_VALIDATE_FORMAT_NBF = errors.New("validate format nbf")
+	ERROR_VALIDATE_FORMAT_EXP = errors.New("validate format exp")
+	ERROR_VALIDATE_NBF        = errors.New("validate nbf")
+	ERROR_VALIDATE_EXP        = errors.New("validate exp")
+	KEY_BEARER                = TokenArgs_t{Name: "bearer", Type: "Bearer", HeaderKey: "Authorization", HeaderPrefix: "Bearer", QueryKey: "bearer"}
+	KEY_BASIC                 = TokenArgs_t{Name: "basic", Type: "Basic", HeaderKey: "Authorization", HeaderPrefix: "Basic", QueryKey: "basic"}
 )
 
 type Token interface {
