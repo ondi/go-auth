@@ -25,7 +25,7 @@ var (
 
 type Token interface {
 	GetName() string
-	GetType() string
+	GetType() []byte
 	GetValue() []byte
 	GetError() error
 	SetError(error)
@@ -41,7 +41,7 @@ type ErrorValidate_t struct {
 }
 
 type TokenCreator interface {
-	TokenCreate(Name string, Type string, Value []byte) Token
+	TokenCreate(Name string, Type []byte, Value []byte) Token
 }
 
 type TokenFinder interface {
