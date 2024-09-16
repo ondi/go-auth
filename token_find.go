@@ -34,11 +34,12 @@ func NewTokenFind(create TokenCreator, args ...TokenArgs_t) *TokenFind_t {
 	}
 }
 
-func (self *TokenFind_t) TokenFind(r *http.Request) (out []Token) {
+func (self *TokenFind_t) TokenFind(r *http.Request) (keys_found int, out []Token) {
 	var ix int
 	var token string
 	for _, v1 := range self.args {
 		for _, token = range r.Header.Values(v1.HeaderKey) {
+			keys_found++
 			for _, v2 := range v1.HeaderPrefix {
 				if ix = HasPrefix(token, v2); ix > -1 {
 					out = append(out, self.create.TokenCreate(v1.Name, v1.Type, []byte(token[ix:])))
@@ -47,6 +48,7 @@ func (self *TokenFind_t) TokenFind(r *http.Request) (out []Token) {
 			}
 		}
 		if c, err := r.Cookie(v1.HeaderKey); err == nil {
+			keys_found++
 			if token, err = url.QueryUnescape(c.Value); err == nil {
 				for _, v2 := range v1.HeaderPrefix {
 					if ix = HasPrefix(token, v2); ix > -1 {
@@ -56,6 +58,7 @@ func (self *TokenFind_t) TokenFind(r *http.Request) (out []Token) {
 			}
 		}
 		for _, v2 := range r.URL.Query()[v1.QueryKey] {
+			keys_found++
 			out = append(out, self.create.TokenCreate(v1.Name, v1.Type, []byte(v2)))
 		}
 	}
