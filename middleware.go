@@ -19,8 +19,8 @@ var (
 	ERROR_VALIDATE_FORMAT_EXP = errors.New("validate format exp")
 	ERROR_VALIDATE_NBF        = errors.New("validate nbf")
 	ERROR_VALIDATE_EXP        = errors.New("validate exp")
-	KEY_BEARER                = TokenArgs_t{Name: "bearer", Type: "Bearer", HeaderKey: "Authorization", HeaderPrefix: "Bearer", QueryKey: "bearer"}
-	KEY_BASIC                 = TokenArgs_t{Name: "basic", Type: "Basic", HeaderKey: "Authorization", HeaderPrefix: "Basic", QueryKey: "basic"}
+	KEY_BEARER                = TokenArgs_t{Name: "bearer", Type: "Bearer", HeaderKey: "Authorization", HeaderPrefix: []string{"Bearer"}, QueryKey: "bearer"}
+	KEY_BASIC                 = TokenArgs_t{Name: "basic", Type: "Basic", HeaderKey: "Authorization", HeaderPrefix: []string{"Basic"}, QueryKey: "basic"}
 )
 
 type Token interface {
