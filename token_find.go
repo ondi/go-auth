@@ -38,7 +38,7 @@ func (self *TokenFind_t) TokenFind(r *http.Request) (out []Token) {
 	var ix int
 	var token string
 	for _, v1 := range self.args {
-		for _, token = range r.Header[v1.HeaderKey] {
+		for _, token = range r.Header.Values(v1.HeaderKey) {
 			for _, v2 := range v1.HeaderPrefix {
 				if ix = HasPrefix(token, v2); ix > -1 {
 					out = append(out, self.create.TokenCreate(v1.Name, v1.Type, []byte(token[ix:])))
