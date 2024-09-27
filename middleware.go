@@ -70,15 +70,15 @@ func Found(ctx context.Context) (found Found_t) {
 	return
 }
 
-func AppendCtx(ctx context.Context, passed []Token, failed []Token, keys_found int) context.Context {
+func AppendCtx(ctx context.Context, found Found_t) context.Context {
 	temp, _ := ctx.Value(&auth).(*Found_t)
 	if temp == nil {
 		temp = &Found_t{}
 		ctx = context.WithValue(ctx, &auth, temp)
 	}
-	temp.KeysFound += keys_found
-	temp.Passed = append(temp.Passed, passed...)
-	temp.Failed = append(temp.Failed, failed...)
+	temp.KeysFound += found.KeysFound
+	temp.Passed = append(temp.Passed, found.Passed...)
+	temp.Failed = append(temp.Failed, found.Failed...)
 	return ctx
 }
 
@@ -101,15 +101,14 @@ func NewAuth(next_passed http.Handler, next_failed http.Handler, routes Routes, 
 
 func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var err error
-	var keys_found int
+	var found Found_t
 	var payload []byte
-	var passed, failed []Token
 	ts := time.Now()
 	verifier, ok := self.routes.Verifier(r.URL.Path)
 	if ok {
 		for _, v1 := range self.find {
-			keys, tokens := v1.TokenFind(r)
-			keys_found += keys
+			keys_found, tokens := v1.TokenFind(r)
+			found.KeysFound += keys_found
 			for _, v2 := range tokens {
 				if payload, err = verifier.Verify(v2.GetValue()); err != nil {
 					v2.SetError(ErrorVerify_t{err})
@@ -118,18 +117,18 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					v2.SetError(ErrorValidate_t{err})
 				}
 				if v2.GetError() != nil {
-					failed = append(failed, v2)
+					found.Failed = append(found.Failed, v2)
 				} else {
-					passed = append(passed, v2)
+					found.Passed = append(found.Passed, v2)
 				}
 			}
 		}
-		if verifier.Approve(passed) {
-			self.next_passed.ServeHTTP(w, r.WithContext(AppendCtx(r.Context(), passed, failed, keys_found)))
+		if verifier.Approve(found.Passed) {
+			self.next_passed.ServeHTTP(w, r.WithContext(AppendCtx(r.Context(), found)))
 			return
 		}
 	}
-	self.next_failed.ServeHTTP(w, r.WithContext(AppendCtx(r.Context(), passed, failed, keys_found)))
+	self.next_failed.ServeHTTP(w, r.WithContext(AppendCtx(r.Context(), found)))
 }
 
 type Status_t struct {
