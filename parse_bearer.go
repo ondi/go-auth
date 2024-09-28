@@ -23,10 +23,7 @@ func (self *keys_bearer_t) Verify(token []byte) (payload []byte, err error) {
 		return
 	}
 	for _, v := range self.verify {
-		if strings.HasPrefix(alg, v.Name()) == false {
-			continue
-		}
-		if jwt.Verify(v, bits, signature, token) {
+		if strings.HasPrefix(alg, v.Name()) && jwt.Verify(v, bits, signature, token) {
 			return
 		}
 	}
