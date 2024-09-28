@@ -94,6 +94,7 @@ func KeysGlob(pattern string, Hmac bool, Cert bool, DER bool) (out []Key_t, err 
 		if key.Value, err = os.ReadFile(v); err != nil {
 			return
 		}
+		key.Id = v
 		out = append(out, key)
 	}
 	return
