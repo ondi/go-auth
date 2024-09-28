@@ -5,7 +5,6 @@
 package auth
 
 import (
-	"bytes"
 	"time"
 )
 
@@ -14,6 +13,7 @@ type BasicValidator interface {
 }
 
 type TokenBasic_t struct {
+	Id         string
 	Name       string
 	Type       string
 	Value      []byte
@@ -35,6 +35,10 @@ func (self *TokenBasic_t) TokenCreate(Name string, Type string, Value []byte) To
 		Value:      Value,
 		validators: self.validators,
 	}
+}
+
+func (self *TokenBasic_t) GetId() string {
+	return self.Id
 }
 
 func (self *TokenBasic_t) GetName() string {
@@ -59,12 +63,8 @@ func (self *TokenBasic_t) SetError(in error) {
 	}
 }
 
-func (self *TokenBasic_t) Validate(ts time.Time, payload []byte) (err error) {
-	if ix := bytes.IndexByte(payload, ':'); ix > -1 {
-		self.Body = payload[:ix]
-	} else {
-		self.Body = payload
-	}
+func (self *TokenBasic_t) Validate(ts time.Time, key_id string, payload []byte) (err error) {
+	self.Id = key_id
 	for _, v := range self.validators {
 		if err = v.ValidateBasic(ts, self); err != nil {
 			return

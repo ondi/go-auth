@@ -24,12 +24,13 @@ var (
 )
 
 type Token interface {
+	GetId() string
 	GetName() string
 	GetType() string
 	GetValue() []byte
 	GetError() error
 	SetError(error)
-	Validate(ts time.Time, payload []byte) error
+	Validate(ts time.Time, key_id string, payload []byte) error
 }
 
 type ErrorVerify_t struct {
@@ -49,7 +50,7 @@ type TokenFinder interface {
 }
 
 type Verifier interface {
-	Verify(token []byte) (payload []byte, err error)
+	Verify(token []byte) (payload []byte, key_id string, err error)
 	Approve(passed []Token) (ok bool)
 }
 
@@ -102,6 +103,7 @@ func NewAuth(next_passed http.Handler, next_failed http.Handler, routes Routes, 
 func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var found Found_t
+	var key_id string
 	var payload []byte
 	ts := time.Now()
 	verifier, ok := self.routes.Verifier(r.URL.Path)
@@ -110,10 +112,10 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			keys_found, tokens := v1.TokenFind(r)
 			found.KeysFound += keys_found
 			for _, v2 := range tokens {
-				if payload, err = verifier.Verify(v2.GetValue()); err != nil {
+				if payload, key_id, err = verifier.Verify(v2.GetValue()); err != nil {
 					v2.SetError(ErrorVerify_t{err})
 				}
-				if err = v2.Validate(ts, payload); err != nil {
+				if err = v2.Validate(ts, key_id, payload); err != nil {
 					v2.SetError(ErrorValidate_t{err})
 				}
 				if v2.GetError() != nil {

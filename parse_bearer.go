@@ -17,13 +17,14 @@ type keys_bearer_t struct {
 	approve *regexp.Regexp
 }
 
-func (self *keys_bearer_t) Verify(token []byte) (payload []byte, err error) {
+func (self *keys_bearer_t) Verify(token []byte) (payload []byte, key_id string, err error) {
 	alg, bits, _, payload, signature, err := jwt.Parse(token)
 	if err != nil {
 		return
 	}
 	for _, v := range self.verify {
-		if strings.HasPrefix(alg, v.Name()) && jwt.Verify(v, bits, signature, token) {
+		if strings.HasPrefix(alg, v.AlgName()) && jwt.Verify(v, bits, signature, token) {
+			key_id = v.KeyId()
 			return
 		}
 	}
@@ -62,18 +63,18 @@ func NewParseBearer(args map[string]KeysBearer_t) (self *ParseBearer_t, err erro
 		}
 		for _, key := range v.Keys {
 			if key.Hmac {
-				verify, err = jwt.NewHmacKey(key.Value)
+				verify, err = jwt.NewHmacKey(key.Id, key.Value)
 			} else if key.Cert {
 				if key.DER {
-					verify, err = jwt.NewVerifyCertDer(key.Value)
+					verify, err = jwt.NewVerifyCertDer(key.Id, key.Value)
 				} else {
-					verify, err = jwt.NewVerifyCertPem(key.Value)
+					verify, err = jwt.NewVerifyCertPem(key.Id, key.Value)
 				}
 			} else {
 				if key.DER {
-					verify, err = jwt.NewVerifyKeyDer(key.Value)
+					verify, err = jwt.NewVerifyKeyDer(key.Id, key.Value)
 				} else {
-					verify, err = jwt.NewVerifyKeyPem(key.Value)
+					verify, err = jwt.NewVerifyKeyPem(key.Id, key.Value)
 				}
 			}
 			if err != nil {

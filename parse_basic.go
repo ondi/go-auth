@@ -5,6 +5,7 @@
 package auth
 
 import (
+	"bytes"
 	"encoding/base64"
 
 	"github.com/ondi/go-tst"
@@ -14,7 +15,7 @@ type keys_basic_t struct {
 	verify map[string]struct{}
 }
 
-func (self *keys_basic_t) Verify(token []byte) (payload []byte, err error) {
+func (self *keys_basic_t) Verify(token []byte) (payload []byte, key_id string, err error) {
 	payload = make([]byte, base64.URLEncoding.DecodedLen(len(token)))
 	n, err := base64.URLEncoding.Decode(payload, token)
 	if err != nil {
@@ -22,6 +23,9 @@ func (self *keys_basic_t) Verify(token []byte) (payload []byte, err error) {
 	}
 	payload = payload[:n]
 	if _, ok := self.verify[string(token)]; ok {
+		if ix := bytes.IndexByte(payload, ':'); ix > -1 {
+			key_id = string(payload[:ix])
+		}
 		return
 	}
 	err = ERROR_VERIFY_FAILED

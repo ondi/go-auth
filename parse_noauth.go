@@ -11,7 +11,7 @@ import (
 type keys_noauth_t struct {
 }
 
-func (self *keys_noauth_t) Verify(token []byte) (payload []byte, err error) {
+func (self *keys_noauth_t) Verify(token []byte) (payload []byte, key_id string, err error) {
 	return
 }
 
