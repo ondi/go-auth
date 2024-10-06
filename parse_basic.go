@@ -11,11 +11,22 @@ import (
 	"github.com/ondi/go-tst"
 )
 
-type keys_basic_t struct {
+type VerifyBasic_t struct {
 	verify map[string]struct{}
 }
 
-func (self *keys_basic_t) Verify(token []byte) (payload []byte, key_id string, err error) {
+func NewVerifyBasic(keys []string) (Verifier, error) {
+	var err error
+	self := &VerifyBasic_t{
+		verify: map[string]struct{}{},
+	}
+	for _, v := range keys {
+		self.verify[v] = struct{}{}
+	}
+	return self, err
+}
+
+func (self *VerifyBasic_t) Verify(token []byte) (payload []byte, key_id string, err error) {
 	payload = make([]byte, base64.URLEncoding.DecodedLen(len(token)))
 	n, err := base64.URLEncoding.Decode(payload, token)
 	if err != nil {
@@ -32,7 +43,7 @@ func (self *keys_basic_t) Verify(token []byte) (payload []byte, key_id string, e
 	return
 }
 
-func (self *keys_basic_t) Approve(found []Token) bool {
+func (self *VerifyBasic_t) Approve(found []Token) bool {
 	return len(found) > 0
 }
 
@@ -40,26 +51,26 @@ type KeysBasic_t struct {
 	Keys []string
 }
 
-type ParseBasic_t struct {
-	args *tst.Tree3_t[*keys_basic_t]
+type RoutesBasic_t struct {
+	args *tst.Tree3_t[Verifier]
 }
 
-func NewParseBasic(keys map[string]KeysBasic_t) (self *ParseBasic_t, err error) {
-	self = &ParseBasic_t{
-		args: tst.NewTree3[*keys_basic_t](),
+func NewRoutesBasic(keys map[string]KeysBasic_t) (Routes, error) {
+	var err error
+	self := &RoutesBasic_t{
+		args: tst.NewTree3[Verifier](),
 	}
-
-	for k1, v1 := range keys {
-		temp := &keys_basic_t{verify: map[string]struct{}{}}
-		for _, v2 := range v1.Keys {
-			temp.verify[v2] = struct{}{}
+	var temp Verifier
+	for k, v := range keys {
+		if temp, err = NewVerifyBasic(v.Keys); err != nil {
+			return self, err
 		}
-		self.args.Add(k1, temp)
+		self.args.Add(k, temp)
 	}
-	return
+	return self, err
 }
 
-func (self *ParseBasic_t) Verifier(path string) (verifier Verifier, ok bool) {
+func (self *RoutesBasic_t) Verifier(path string) (verifier Verifier, ok bool) {
 	verifier, ok = self.args.Search(path)
 	return
 }
