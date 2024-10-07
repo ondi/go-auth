@@ -19,11 +19,11 @@ type VerifyBearer_t struct {
 
 func NewVerifyBearer(keys []Key_t, approve string) (Verifier, error) {
 	var err error
-	var verify jwt.Verifier
 	self := &VerifyBearer_t{}
 	if self.approve, err = regexp.Compile(approve); err != nil {
 		return self, err
 	}
+	var verify jwt.Verifier
 	for _, key := range keys {
 		if key.Hmac {
 			verify, err = jwt.NewHmacKey(key.Id, key.Value)
