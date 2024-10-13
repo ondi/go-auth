@@ -71,6 +71,7 @@ func NewRoutesBasic(keys map[string]KeysBasic_t) (Routes, error) {
 }
 
 func (self *RoutesBasic_t) Verifier(path string) (verifier Verifier, ok bool) {
-	verifier, ok = self.args.Search(path)
+	verifier, _, found := self.args.Search(path)
+	ok = found > 0
 	return
 }

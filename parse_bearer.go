@@ -97,6 +97,7 @@ func NewRoutesBearer(args map[string]KeysBearer_t) (Routes, error) {
 }
 
 func (self *RoutesBearer_t) Verifier(path string) (verifier Verifier, ok bool) {
-	verifier, ok = self.args.Search(path)
+	verifier, _, found := self.args.Search(path)
+	ok = found > 0
 	return
 }

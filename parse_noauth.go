@@ -35,6 +35,7 @@ func NewParseNoAuth(keys map[string]struct{}) (self *ParseNoAuth_t, err error) {
 }
 
 func (self *ParseNoAuth_t) Verifier(path string) (verifier Verifier, ok bool) {
-	verifier, ok = self.args.Search(path)
+	verifier, _, found := self.args.Search(path)
+	ok = found > 0
 	return
 }

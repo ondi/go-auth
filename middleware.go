@@ -59,9 +59,9 @@ type Routes interface {
 }
 
 type Found_t struct {
-	KeysFound int
 	Passed    []Token
 	Failed    []Token
+	KeysFound int
 }
 
 func Found(ctx context.Context) (found Found_t) {
