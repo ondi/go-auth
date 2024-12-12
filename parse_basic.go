@@ -7,21 +7,26 @@ package auth
 import (
 	"bytes"
 	"encoding/base64"
+	"regexp"
 
 	"github.com/ondi/go-tst"
 )
 
 type VerifyBasic_t struct {
-	verify map[string]struct{}
+	verify  map[string]struct{}
+	approve *regexp.Regexp
 }
 
-func NewVerifyBasic(keys []string) (Verifier, error) {
+func NewVerifyBasic(keys []string, approve string) (Verifier, error) {
 	var err error
 	self := &VerifyBasic_t{
 		verify: map[string]struct{}{},
 	}
 	for _, v := range keys {
 		self.verify[v] = struct{}{}
+	}
+	if self.approve, err = regexp.Compile(approve); err != nil {
+		return self, err
 	}
 	return self, err
 }
@@ -44,11 +49,17 @@ func (self *VerifyBasic_t) Verify(token []byte) (payload []byte, key_id string, 
 }
 
 func (self *VerifyBasic_t) Approve(found []Token) bool {
-	return len(found) > 0
+	for _, v := range found {
+		if self.approve.MatchString(v.GetName()) {
+			return true
+		}
+	}
+	return false
 }
 
 type KeysBasic_t struct {
-	Keys []string
+	Keys    []string
+	Approve string
 }
 
 type RoutesBasic_t struct {
@@ -62,7 +73,7 @@ func NewRoutesBasic(keys map[string]KeysBasic_t) (Routes, error) {
 	}
 	var temp Verifier
 	for k, v := range keys {
-		if temp, err = NewVerifyBasic(v.Keys); err != nil {
+		if temp, err = NewVerifyBasic(v.Keys, v.Approve); err != nil {
 			return self, err
 		}
 		self.args.Add(k, temp)
