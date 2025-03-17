@@ -1,9 +1,9 @@
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
-github.com/ondi/go-jwt v0.0.0-20240928214704-e60a573c14c3 h1:/eWsRaVm2NLi0GlM6Fm914vqOXna4cpWYWPZ1E1ntjk=
-github.com/ondi/go-jwt v0.0.0-20240928214704-e60a573c14c3/go.mod h1:HPdLb/adlF2YYI/COQAwdD8vhEWfKVxNHWTh5+P5J+E=
-github.com/ondi/go-tst v0.0.0-20241202144437-eda7f5ee386d h1:Jc6yP8Q/snoW7HzolTjR6YaY5bdReP2RwDTlyKEp8R8=
-github.com/ondi/go-tst v0.0.0-20241202144437-eda7f5ee386d/go.mod h1:bbv9XEr4uSs9mvBNj+Kr14WXyp6d4+AO1cbW+bMbJI4=
+github.com/ondi/go-jwt v0.0.0-20250228093032-7e47584a4519 h1:p6tgF62fqeGbD6PXPTpWJJfaPrZjwwpOhfYD8Zy7nug=
+github.com/ondi/go-jwt v0.0.0-20250228093032-7e47584a4519/go.mod h1:7HyYN7Ox34E38VlqV9WkNqV3Llwvy/IjHnr4oElUTKY=
+github.com/ondi/go-tst v0.0.0-20250316090829-343457f0ef97 h1:n1XaMuMii27mbR9sAM+HE/L5NQDOuN6Cz6RgKbTOGEE=
+github.com/ondi/go-tst v0.0.0-20250316090829-343457f0ef97/go.mod h1:cGrTydPs4pWqcOx8pasvmcCRSczZZ8wK30FDr2ZBiLI=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 gotest.tools v2.2.0+incompatible h1:VsBPFP1AI068pPrMxtb/S8Zkgf9xEmTLJjfM+P5UIEo=
