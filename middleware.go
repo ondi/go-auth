@@ -9,6 +9,8 @@ import (
 	"errors"
 	"net/http"
 	"time"
+
+	"github.com/ondi/go-tst"
 )
 
 var (
@@ -54,10 +56,6 @@ type Verifier interface {
 	Approve(passed []Token) (ok bool)
 }
 
-type Routes interface {
-	Verifier(path string) (verifier Verifier, ok bool)
-}
-
 type Found_t struct {
 	Passed    []Token
 	Failed    []Token
@@ -85,17 +83,20 @@ func AppendCtx(ctx context.Context, found Found_t) context.Context {
 
 type Auth_t struct {
 	find        []TokenFinder
-	routes      Routes
+	routes      *tst.Tree3_t[Verifier]
 	next_passed http.Handler
 	next_failed http.Handler
 }
 
-func NewAuth(next_passed http.Handler, next_failed http.Handler, routes Routes, find ...TokenFinder) (self *Auth_t) {
+func NewAuth(next_passed http.Handler, next_failed http.Handler, verifiers map[string]Verifier, find ...TokenFinder) (self *Auth_t) {
 	self = &Auth_t{
-		find:        find,
-		routes:      routes,
 		next_passed: next_passed,
 		next_failed: next_failed,
+		routes:      tst.NewTree3[Verifier](),
+		find:        find,
+	}
+	for k, v := range verifiers {
+		self.routes.Add(k, v)
 	}
 	return
 }
@@ -106,8 +107,8 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var key_id string
 	var payload []byte
 	ts := time.Now()
-	verifier, ok := self.routes.Verifier(r.URL.Path)
-	if ok {
+	verifier, _, count := self.routes.Search(r.URL.Path)
+	if count > 0 {
 		for _, v1 := range self.find {
 			keys_found, tokens := v1.TokenFind(r)
 			found.KeysFound += keys_found

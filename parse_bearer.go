@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/ondi/go-jwt"
-	"github.com/ondi/go-tst"
 )
 
 type VerifyBearer_t struct {
@@ -77,27 +76,14 @@ type KeysBearer_t struct {
 	Approve string
 }
 
-type RoutesBearer_t struct {
-	args *tst.Tree3_t[Verifier]
-}
-
-func NewRoutesBearer(args map[string]KeysBearer_t) (Routes, error) {
-	var err error
-	self := &RoutesBearer_t{
-		args: tst.NewTree3[Verifier](),
-	}
+func NewVerifiersBearer(in map[string]KeysBearer_t) (out map[string]Verifier, err error) {
 	var temp Verifier
-	for k, v := range args {
+	out = map[string]Verifier{}
+	for k, v := range in {
 		if temp, err = NewVerifyBearer(v.Keys, v.Approve); err != nil {
-			return self, err
+			return
 		}
-		self.args.Add(k, temp)
+		out[k] = temp
 	}
-	return self, err
-}
-
-func (self *RoutesBearer_t) Verifier(path string) (verifier Verifier, ok bool) {
-	verifier, _, found := self.args.Search(path)
-	ok = found > 0
 	return
 }

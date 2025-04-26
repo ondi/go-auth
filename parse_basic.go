@@ -8,8 +8,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"regexp"
-
-	"github.com/ondi/go-tst"
 )
 
 type VerifyBasic_t struct {
@@ -62,27 +60,14 @@ type KeysBasic_t struct {
 	Approve string
 }
 
-type RoutesBasic_t struct {
-	args *tst.Tree3_t[Verifier]
-}
-
-func NewRoutesBasic(keys map[string]KeysBasic_t) (Routes, error) {
-	var err error
-	self := &RoutesBasic_t{
-		args: tst.NewTree3[Verifier](),
-	}
+func NewVerifiersBasic(in map[string]KeysBasic_t) (out map[string]Verifier, err error) {
 	var temp Verifier
-	for k, v := range keys {
+	out = map[string]Verifier{}
+	for k, v := range in {
 		if temp, err = NewVerifyBasic(v.Keys, v.Approve); err != nil {
-			return self, err
+			return
 		}
-		self.args.Add(k, temp)
+		out[k] = temp
 	}
-	return self, err
-}
-
-func (self *RoutesBasic_t) Verifier(path string) (verifier Verifier, ok bool) {
-	verifier, _, found := self.args.Search(path)
-	ok = found > 0
 	return
 }

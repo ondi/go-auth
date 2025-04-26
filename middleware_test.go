@@ -15,13 +15,13 @@ import (
 var router = http.DefaultServeMux
 
 func Test001(t *testing.T) {
-	parse_bearer, err := NewRoutesBearer(map[string]KeysBearer_t{"/": {Keys: nil, Approve: ""}})
+	parse_bearer, err := NewVerifiersBearer(map[string]KeysBearer_t{"/": {Keys: nil, Approve: ""}})
 	assert.NilError(t, err)
 
-	parse_basic, err := NewRoutesBasic(map[string]KeysBasic_t{"/": {Keys: nil}})
+	parse_basic, err := NewVerifiersBasic(map[string]KeysBasic_t{"/": {Keys: nil}})
 	assert.NilError(t, err)
 
-	parse_noauth, err := NewParseNoAuth(map[string]struct{}{"/": {}})
+	parse_noauth, err := NewVerifiersNoAuth(map[string]struct{}{"/": {}})
 	assert.NilError(t, err)
 
 	noauth := NewAuth(
