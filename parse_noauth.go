@@ -4,18 +4,18 @@
 
 package auth
 
-type keys_noauth_t struct {
+type VerifyNoAuth struct {
 }
 
-func (self *keys_noauth_t) Verify(token []byte) (payload []byte, key_id string, err error) {
+func (self *VerifyNoAuth) Verify(token []byte) (payload []byte, key_id string, err error) {
 	return
 }
 
-func (self *keys_noauth_t) Approve(found []Token) bool {
+func (self *VerifyNoAuth) Approve(found []Token) bool {
 	return true
 }
 
-func NewVerifyNoAuth() (self *keys_noauth_t, err error) {
-	self = &keys_noauth_t{}
+func NewVerifyNoAuth() (self *VerifyNoAuth, err error) {
+	self = &VerifyNoAuth{}
 	return
 }

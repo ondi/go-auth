@@ -54,8 +54,3 @@ func (self *VerifyBasic_t) Approve(found []Token) bool {
 	}
 	return false
 }
-
-type KeysBasic_t struct {
-	Keys    []string
-	Approve string
-}

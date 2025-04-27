@@ -70,8 +70,3 @@ func (self *VerifyBearer_t) Approve(found []Token) bool {
 	}
 	return false
 }
-
-type KeysBearer_t struct {
-	Keys    []Key_t
-	Approve string
-}
