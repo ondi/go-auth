@@ -59,15 +59,3 @@ type KeysBasic_t struct {
 	Keys    []string
 	Approve string
 }
-
-func NewVerifiersBasic(in map[string]KeysBasic_t) (out map[string]Verifier, err error) {
-	var temp Verifier
-	out = map[string]Verifier{}
-	for k, v := range in {
-		if temp, err = NewVerifyBasic(v.Keys, v.Approve); err != nil {
-			return
-		}
-		out[k] = temp
-	}
-	return
-}

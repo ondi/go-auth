@@ -88,17 +88,18 @@ type Auth_t struct {
 	next_failed http.Handler
 }
 
-func NewAuth(next_passed http.Handler, next_failed http.Handler, verifiers map[string]Verifier, find ...TokenFinder) (self *Auth_t) {
+func NewAuth(next_passed http.Handler, next_failed http.Handler, find ...TokenFinder) (self *Auth_t) {
 	self = &Auth_t{
 		next_passed: next_passed,
 		next_failed: next_failed,
 		routes:      tst.NewTree3[Verifier](),
 		find:        find,
 	}
-	for k, v := range verifiers {
-		self.routes.Add(k, v)
-	}
 	return
+}
+
+func (self *Auth_t) AddVerifier(route string, verifier Verifier) {
+	self.routes.Add(route, verifier)
 }
 
 func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {

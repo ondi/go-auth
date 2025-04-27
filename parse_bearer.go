@@ -75,15 +75,3 @@ type KeysBearer_t struct {
 	Keys    []Key_t
 	Approve string
 }
-
-func NewVerifiersBearer(in map[string]KeysBearer_t) (out map[string]Verifier, err error) {
-	var temp Verifier
-	out = map[string]Verifier{}
-	for k, v := range in {
-		if temp, err = NewVerifyBearer(v.Keys, v.Approve); err != nil {
-			return
-		}
-		out[k] = temp
-	}
-	return
-}

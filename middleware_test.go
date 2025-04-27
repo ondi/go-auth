@@ -15,35 +15,34 @@ import (
 var router = http.DefaultServeMux
 
 func Test001(t *testing.T) {
-	parse_bearer, err := NewVerifiersBearer(map[string]KeysBearer_t{"/": {Keys: nil, Approve: ""}})
+	verify_bearer, err := NewVerifyBearer(nil, "")
 	assert.NilError(t, err)
 
-	parse_basic, err := NewVerifiersBasic(map[string]KeysBasic_t{"/": {Keys: nil}})
+	verify_basic, err := NewVerifyBasic(nil, "")
 	assert.NilError(t, err)
 
-	parse_noauth, err := NewVerifiersNoAuth(map[string]struct{}{"/": {}})
+	verifiy_noauth, err := NewVerifyNoAuth()
 	assert.NilError(t, err)
 
 	noauth := NewAuth(
 		router,
 		NewStatus401(),
-		parse_noauth,
 	)
+	noauth.AddVerifier("/noath", verifiy_noauth)
 
 	basic := NewAuth(
 		router,
 		noauth,
-		parse_basic,
 		NewTokenFind(
 			NewTokenBasic(),
 			KEY_BASIC,
 		),
 	)
+	basic.AddVerifier("/basic", verify_basic)
 
 	bearer := NewAuth(
 		router,
 		basic,
-		parse_bearer,
 		NewTokenFind(
 			NewTokenBearer(
 				NewExp(-60, 60),
@@ -51,8 +50,9 @@ func Test001(t *testing.T) {
 			KEY_BEARER,
 		),
 	)
+	bearer.AddVerifier("/bearer", verify_bearer)
 
-	r := httptest.NewRequest("GET", "http://localhost", nil)
-	w := httptest.NewRecorder()
-	bearer.ServeHTTP(w, r)
+	r1 := httptest.NewRequest("GET", "http://localhost", nil)
+	w1 := httptest.NewRecorder()
+	bearer.ServeHTTP(w1, r1)
 }
