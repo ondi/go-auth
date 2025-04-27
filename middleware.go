@@ -82,10 +82,10 @@ func AppendCtx(ctx context.Context, found Found_t) context.Context {
 }
 
 type Auth_t struct {
-	find        []TokenFinder
-	routes      *tst.Tree3_t[Verifier]
 	next_passed http.Handler
 	next_failed http.Handler
+	routes      *tst.Tree3_t[Verifier]
+	find        []TokenFinder
 }
 
 func NewAuth(next_passed http.Handler, next_failed http.Handler, find ...TokenFinder) (self *Auth_t) {
