@@ -5,6 +5,7 @@
 package auth
 
 import (
+	"net/http"
 	"regexp"
 	"strings"
 
@@ -12,15 +13,17 @@ import (
 )
 
 type VerifyBearer_t struct {
+	find    TokenFinder
 	verify  []jwt.Verifier
 	approve *regexp.Regexp
 }
 
-func NewVerifyBearer(keys []Key_t, approve string) (Verifier, error) {
-	var err error
-	self := &VerifyBearer_t{}
+func NewVerifyBearer(keys []Key_t, approve string, find TokenFinder) (self *VerifyBearer_t, err error) {
+	self = &VerifyBearer_t{
+		find: find,
+	}
 	if self.approve, err = regexp.Compile(approve); err != nil {
-		return self, err
+		return
 	}
 	var verify jwt.Verifier
 	for _, key := range keys {
@@ -40,11 +43,15 @@ func NewVerifyBearer(keys []Key_t, approve string) (Verifier, error) {
 			}
 		}
 		if err != nil {
-			return self, err
+			return
 		}
 		self.verify = append(self.verify, verify)
 	}
-	return self, err
+	return
+}
+
+func (self *VerifyBearer_t) TokenFind(r *http.Request) (keys_found int, out []Token) {
+	return self.find.TokenFind(r)
 }
 
 func (self *VerifyBearer_t) Verify(token []byte) (payload []byte, key_id string, err error) {

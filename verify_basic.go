@@ -7,26 +7,32 @@ package auth
 import (
 	"bytes"
 	"encoding/base64"
+	"net/http"
 	"regexp"
 )
 
 type VerifyBasic_t struct {
+	find    TokenFinder
 	verify  map[string]struct{}
 	approve *regexp.Regexp
 }
 
-func NewVerifyBasic(keys []string, approve string) (Verifier, error) {
-	var err error
-	self := &VerifyBasic_t{
+func NewVerifyBasic(keys []string, approve string, find TokenFinder) (self *VerifyBasic_t, err error) {
+	self = &VerifyBasic_t{
+		find:   find,
 		verify: map[string]struct{}{},
 	}
 	for _, v := range keys {
 		self.verify[v] = struct{}{}
 	}
 	if self.approve, err = regexp.Compile(approve); err != nil {
-		return self, err
+		return
 	}
-	return self, err
+	return
+}
+
+func (self *VerifyBasic_t) TokenFind(r *http.Request) (keys_found int, out []Token) {
+	return self.find.TokenFind(r)
 }
 
 func (self *VerifyBasic_t) Verify(token []byte) (payload []byte, key_id string, err error) {

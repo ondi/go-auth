@@ -48,10 +48,11 @@ type TokenCreator interface {
 }
 
 type TokenFinder interface {
-	TokenFind(r *http.Request) (int, []Token)
+	TokenFind(r *http.Request) (keys_found int, out []Token)
 }
 
 type Verifier interface {
+	TokenFinder
 	Verify(token []byte) (payload []byte, key_id string, err error)
 	Approve(passed []Token) (ok bool)
 }
@@ -85,15 +86,13 @@ type Auth_t struct {
 	next_passed http.Handler
 	next_failed http.Handler
 	routes      *tst.Tree3_t[Verifier]
-	find        []TokenFinder
 }
 
-func NewAuth(next_passed http.Handler, next_failed http.Handler, find ...TokenFinder) (self *Auth_t) {
+func NewAuth(next_passed http.Handler, next_failed http.Handler) (self *Auth_t) {
 	self = &Auth_t{
 		next_passed: next_passed,
 		next_failed: next_failed,
 		routes:      tst.NewTree3[Verifier](),
-		find:        find,
 	}
 	return
 }
@@ -110,21 +109,19 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ts := time.Now()
 	verifier, _, count := self.routes.Search(r.URL.Path)
 	if count > 0 {
-		for _, v1 := range self.find {
-			keys_found, tokens := v1.TokenFind(r)
-			found.KeysFound += keys_found
-			for _, v2 := range tokens {
-				if payload, key_id, err = verifier.Verify(v2.GetValue()); err != nil {
-					v2.SetError(ErrorVerify_t{err})
-				}
-				if err = v2.Validate(ts, key_id, payload); err != nil {
-					v2.SetError(ErrorValidate_t{err})
-				}
-				if v2.GetError() != nil {
-					found.Failed = append(found.Failed, v2)
-				} else {
-					found.Passed = append(found.Passed, v2)
-				}
+		keys_found, tokens := verifier.TokenFind(r)
+		found.KeysFound += keys_found
+		for _, v2 := range tokens {
+			if payload, key_id, err = verifier.Verify(v2.GetValue()); err != nil {
+				v2.SetError(ErrorVerify_t{err})
+			}
+			if err = v2.Validate(ts, key_id, payload); err != nil {
+				v2.SetError(ErrorValidate_t{err})
+			}
+			if v2.GetError() != nil {
+				found.Failed = append(found.Failed, v2)
+			} else {
+				found.Passed = append(found.Passed, v2)
 			}
 		}
 		if verifier.Approve(found.Passed) {
