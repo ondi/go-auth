@@ -97,8 +97,9 @@ func NewAuth(next_passed http.Handler, next_failed http.Handler) (self *Auth_t) 
 	return
 }
 
-func (self *Auth_t) AddVerifier(route string, verifier Verifier) {
-	self.routes.Add(route, verifier)
+func (self *Auth_t) AddVerifier(route string, verifier Verifier) (ok bool) {
+	_, ok = self.routes.Add(route, verifier)
+	return
 }
 
 func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
