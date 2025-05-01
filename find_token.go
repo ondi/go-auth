@@ -81,6 +81,7 @@ func HasPrefix(in string, prefix string) (res int) {
 }
 
 func AppendGlob(in []Key_t, pattern string, Hmac bool, Cert bool, DER bool) (out []Key_t, err error) {
+	out = in
 	matched, err := filepath.Glob(pattern)
 	if err != nil {
 		return
@@ -90,7 +91,6 @@ func AppendGlob(in []Key_t, pattern string, Hmac bool, Cert bool, DER bool) (out
 		Cert: Cert,
 		DER:  DER,
 	}
-	out = in
 	for _, v := range matched {
 		if key.Value, err = os.ReadFile(v); err != nil {
 			return
