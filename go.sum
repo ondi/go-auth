@@ -6,6 +6,8 @@ github.com/ondi/go-tst v0.0.0-20250529132544-f5e650fc0b7f h1:jHv1ej0zCG2Jyf8m52W
 github.com/ondi/go-tst v0.0.0-20250529132544-f5e650fc0b7f/go.mod h1:cGrTydPs4pWqcOx8pasvmcCRSczZZ8wK30FDr2ZBiLI=
 github.com/ondi/go-tst v0.0.0-20250604092758-f261769e192b h1:bUVtD4kO+Vd1qbWihADCn/J1zKL3cHtQWlXX8OuAKXc=
 github.com/ondi/go-tst v0.0.0-20250604092758-f261769e192b/go.mod h1:cGrTydPs4pWqcOx8pasvmcCRSczZZ8wK30FDr2ZBiLI=
+github.com/ondi/go-tst v0.0.0-20250605095051-c02c56ff2f24 h1:PBZUfGhv1rGjgqahDJknkwrtZdcH5zccT7lMyNWguEA=
+github.com/ondi/go-tst v0.0.0-20250605095051-c02c56ff2f24/go.mod h1:cGrTydPs4pWqcOx8pasvmcCRSczZZ8wK30FDr2ZBiLI=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 gotest.tools v2.2.0+incompatible h1:VsBPFP1AI068pPrMxtb/S8Zkgf9xEmTLJjfM+P5UIEo=
