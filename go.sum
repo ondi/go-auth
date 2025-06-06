@@ -12,6 +12,8 @@ github.com/ondi/go-tst v0.0.0-20250605124535-ba8b043dad05 h1:iHxFOvnHXIvvFRnnS7k
 github.com/ondi/go-tst v0.0.0-20250605124535-ba8b043dad05/go.mod h1:cGrTydPs4pWqcOx8pasvmcCRSczZZ8wK30FDr2ZBiLI=
 github.com/ondi/go-tst v0.0.0-20250606081130-b6353b349958 h1:6UdQUiax4PYchzPNjcGTh+UsyLW4oXYBS5cv9+pIhh8=
 github.com/ondi/go-tst v0.0.0-20250606081130-b6353b349958/go.mod h1:cGrTydPs4pWqcOx8pasvmcCRSczZZ8wK30FDr2ZBiLI=
+github.com/ondi/go-tst v0.0.0-20250606090140-02857678c53f h1:eBxNZ5JhZO/JmuA5GHIz+x9nMEehiBfIgck9N9lvSJk=
+github.com/ondi/go-tst v0.0.0-20250606090140-02857678c53f/go.mod h1:cGrTydPs4pWqcOx8pasvmcCRSczZZ8wK30FDr2ZBiLI=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 gotest.tools v2.2.0+incompatible h1:VsBPFP1AI068pPrMxtb/S8Zkgf9xEmTLJjfM+P5UIEo=
