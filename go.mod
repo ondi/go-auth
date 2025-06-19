@@ -4,7 +4,7 @@ go 1.23
 
 require (
 	github.com/ondi/go-jwt v0.0.0-20250228093032-7e47584a4519
-	github.com/ondi/go-tst v0.0.0-20250617161857-5db70c25a4c9
+	github.com/ondi/go-tst v0.0.0-20250618204313-af72047bbd7c
 	gotest.tools v2.2.0+incompatible
 )
 
