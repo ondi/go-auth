@@ -32,7 +32,7 @@ type Token interface {
 	GetValue() []byte
 	GetError() error
 	SetError(error)
-	Validate(ts time.Time, key_id string, payload []byte) error
+	Validate(ts time.Time, route string, key_id string, payload []byte) error
 }
 
 type ErrorVerify_t struct {
@@ -116,7 +116,7 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if payload, key_id, err = verifier.Verify(v2.GetValue()); err != nil {
 				v2.SetError(ErrorVerify_t{err})
 			}
-			if err = v2.Validate(ts, key_id, payload); err != nil {
+			if err = v2.Validate(ts, r.URL.Path, key_id, payload); err != nil {
 				v2.SetError(ErrorValidate_t{err})
 			}
 			if v2.GetError() != nil {

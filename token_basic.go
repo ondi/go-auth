@@ -9,7 +9,7 @@ import (
 )
 
 type BasicValidator interface {
-	ValidateBasic(ts time.Time, token *TokenBasic_t) error
+	ValidateBasic(ts time.Time, route string, token *TokenBasic_t) error
 }
 
 type TokenBasic_t struct {
@@ -63,10 +63,10 @@ func (self *TokenBasic_t) SetError(in error) {
 	}
 }
 
-func (self *TokenBasic_t) Validate(ts time.Time, key_id string, payload []byte) (err error) {
+func (self *TokenBasic_t) Validate(ts time.Time, route string, key_id string, payload []byte) (err error) {
 	self.Id = key_id
 	for _, v := range self.validators {
-		if err = v.ValidateBasic(ts, self); err != nil {
+		if err = v.ValidateBasic(ts, route, self); err != nil {
 			return
 		}
 	}
