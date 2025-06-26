@@ -134,17 +134,24 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type Status_t struct {
-	StatusCode int
+	status_code int
+	logs        []http.Handler
+}
+
+func NewStatus(status_code int, logs ...http.Handler) *Status_t {
+	return &Status_t{
+		status_code: status_code,
+		logs:        logs,
+	}
+}
+
+func NewStatus401(logs ...http.Handler) *Status_t {
+	return NewStatus(http.StatusUnauthorized, logs...)
 }
 
 func (self *Status_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(self.StatusCode)
-}
-
-func NewStatus(StatusCode int) *Status_t {
-	return &Status_t{StatusCode: StatusCode}
-}
-
-func NewStatus401() *Status_t {
-	return &Status_t{StatusCode: http.StatusUnauthorized}
+	for _, v := range self.logs {
+		v.ServeHTTP(w, r)
+	}
+	w.WriteHeader(self.status_code)
 }
