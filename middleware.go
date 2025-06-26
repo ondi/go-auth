@@ -150,3 +150,11 @@ func NewStatus401() *Status_t {
 func (self *Status_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(self.status_code)
 }
+
+type EmptyAuth_t struct {
+	Next http.Handler
+}
+
+func (self *EmptyAuth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	self.Next.ServeHTTP(w, r.WithContext(AppendCtx(r.Context(), Found_t{})))
+}
