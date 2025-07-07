@@ -1,10 +1,10 @@
 module github.com/ondi/go-auth
 
-go 1.23
+go 1.24
 
 require (
 	github.com/ondi/go-jwt v0.0.0-20250228093032-7e47584a4519
-	github.com/ondi/go-tst v0.0.0-20250704120347-854064572262
+	github.com/ondi/go-tst v0.0.0-20250707100120-1212395da51a
 	gotest.tools v2.2.0+incompatible
 )
 
