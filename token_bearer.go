@@ -14,7 +14,7 @@ type BearerValidator interface {
 }
 
 type TokenBearer_t struct {
-	Id         string
+	KeyId      string
 	Name       string
 	Type       string
 	Value      []byte
@@ -38,8 +38,8 @@ func (self *TokenBearer_t) TokenCreate(Name string, Type string, Value []byte) T
 	}
 }
 
-func (self *TokenBearer_t) GetId() string {
-	return self.Id
+func (self *TokenBearer_t) GetKeyId() string {
+	return self.KeyId
 }
 
 func (self *TokenBearer_t) GetName() string {
@@ -65,7 +65,7 @@ func (self *TokenBearer_t) SetError(in error) {
 }
 
 func (self *TokenBearer_t) Validate(ts time.Time, route string, key_id string, payload []byte) (err error) {
-	self.Id = key_id
+	self.KeyId = key_id
 	if err = json.Unmarshal(payload, &self.Body); err != nil {
 		return
 	}

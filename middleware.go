@@ -26,7 +26,7 @@ var (
 )
 
 type Token interface {
-	GetId() string
+	GetKeyId() string
 	GetName() string
 	GetType() string
 	GetValue() []byte

@@ -13,7 +13,7 @@ type BasicValidator interface {
 }
 
 type TokenBasic_t struct {
-	Id         string
+	KeyId      string
 	Name       string
 	Type       string
 	Value      []byte
@@ -37,8 +37,8 @@ func (self *TokenBasic_t) TokenCreate(Name string, Type string, Value []byte) To
 	}
 }
 
-func (self *TokenBasic_t) GetId() string {
-	return self.Id
+func (self *TokenBasic_t) GetKeyId() string {
+	return self.KeyId
 }
 
 func (self *TokenBasic_t) GetName() string {
@@ -64,7 +64,7 @@ func (self *TokenBasic_t) SetError(in error) {
 }
 
 func (self *TokenBasic_t) Validate(ts time.Time, route string, key_id string, payload []byte) (err error) {
-	self.Id = key_id
+	self.KeyId = key_id
 	for _, v := range self.validators {
 		if err = v.ValidateBasic(ts, route, self); err != nil {
 			return
