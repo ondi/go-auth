@@ -1,0 +1,10 @@
+github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
+github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
+github.com/ondi/go-jwt v0.0.0-20251217090607-c3b4c1a326ca h1:Qa0X9TC7fL4RmukSeOgQr8TRuOqUaA4eCMbE7rQib1A=
+github.com/ondi/go-jwt v0.0.0-20251217090607-c3b4c1a326ca/go.mod h1:8ZztOGgKSw2gvaCAAiVlFf8He81ElaGiDdXDXSmQxK8=
+github.com/ondi/go-tst v0.0.0-20260215171832-02a9b13f7337 h1:D7/Cn36Z6j62+LPJHfyDqIeIcQO3+lXTUjmLkB3UuVM=
+github.com/ondi/go-tst v0.0.0-20260215171832-02a9b13f7337/go.mod h1:zRzfWc/Mjagx9CDi9qfPBhrZiKVCtif3hxCZ9uqj+lI=
+github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
+github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+gotest.tools v2.2.0+incompatible h1:VsBPFP1AI068pPrMxtb/S8Zkgf9xEmTLJjfM+P5UIEo=
+gotest.tools v2.2.0+incompatible/go.mod h1:DsYFclhRJ6vuDpmuTbkuFWG+y2sxOXAzmJt81HFBacw=

@@ -1,9 +1,14 @@
-module go-auth
+module github.com/ondi/go-auth
 
-go 1.14
+go 1.25
 
 require (
-	github.com/ondi/go-jwt v0.0.0-20200305112848-556599382750
-	github.com/ondi/go-log v0.0.0-20200318172402-cc38a784d03a
-	github.com/ondi/go-tst v0.0.0-20200410195032-504f5a01d5a5
+	github.com/ondi/go-jwt v0.0.0-20251217090607-c3b4c1a326ca
+	github.com/ondi/go-tst v0.0.0-20260215171832-02a9b13f7337
+	gotest.tools v2.2.0+incompatible
+)
+
+require (
+	github.com/google/go-cmp v0.7.0 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 )
