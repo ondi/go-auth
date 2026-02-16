@@ -7,6 +7,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -135,20 +136,32 @@ func (self *Auth_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type Status_t struct {
 	status_code int
+	debug       bool
 }
 
-func NewStatus(status_code int) *Status_t {
+func NewStatus(status_code int, debug bool) *Status_t {
 	return &Status_t{
 		status_code: status_code,
+		debug:       debug,
 	}
 }
 
-func NewStatus401() *Status_t {
-	return NewStatus(http.StatusUnauthorized)
+func NewStatus401(debug bool) *Status_t {
+	return NewStatus(http.StatusUnauthorized, debug)
 }
 
 func (self *Status_t) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(self.status_code)
+	if self.debug {
+		found := Found(r.Context())
+		fmt.Fprintf(w, "# KEYS %v\n", found.KeysFound)
+		for _, v := range found.Passed {
+			fmt.Fprintf(w, "# PASSED token=%.64s, err=%v\n", v.GetValue(), v.GetError())
+		}
+		for _, v := range found.Failed {
+			fmt.Fprintf(w, "# FAILED token=%.64s, err=%v\n", v.GetValue(), v.GetError())
+		}
+	}
 }
 
 type EmptyAuth_t struct {

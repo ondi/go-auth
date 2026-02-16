@@ -36,7 +36,7 @@ func Test001(t *testing.T) {
 	verifiy_noauth, err := NewVerifyNoAuth()
 	assert.NilError(t, err)
 
-	noauth := NewAuth(router, NewStatus401())
+	noauth := NewAuth(router, NewStatus401(false))
 	noauth.AddVerifier("/noath", verifiy_noauth)
 
 	basic := NewAuth(router, noauth)
